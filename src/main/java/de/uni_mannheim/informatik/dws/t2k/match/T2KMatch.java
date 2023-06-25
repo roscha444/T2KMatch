@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -122,7 +125,7 @@ public class T2KMatch extends Executable implements Serializable {
 	private String rdLocation;
 
 	@Parameter(names = "-verbose")
-	private boolean verbose = false;
+	private final boolean verbose = true;
 	
 	@Parameter(names = "-detectKeys")
 	private boolean detectKeys;
@@ -131,10 +134,10 @@ public class T2KMatch extends Executable implements Serializable {
 	 * Parameters for algorithm configuration
 	 *******/
 	@Parameter(names = "-mappedRatio")
-	private double par_mappedRatio=0.0;
+	private final double par_mappedRatio=0.0;
 	
 	@Parameter(names = "-numIterations")
-	private int numIterations = 1;
+	private final int numIterations = 1;
 	
     public static void main( String[] args ) throws Exception
     {
@@ -201,7 +204,7 @@ public class T2KMatch extends Executable implements Serializable {
     	}
     	
     	// load schema gold standard
-    	if(schemaGSLocation!=null) {
+     	if(schemaGSLocation!=null) {
     		File schemaGsFile = new File(schemaGSLocation);
     		if(schemaGsFile.exists()) {
 				schemaGs = new MatchingGoldStandard();
@@ -263,7 +266,7 @@ public class T2KMatch extends Executable implements Serializable {
     	Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> keyCorrespondences = web.getKeys().map(new WebTableKeyToRdfsLabelCorrespondenceGenerator(kb.getRdfsLabel()));
     	if(verbose) {
     		for(Correspondence<MatchableTableColumn, MatchableTableRow> cor : keyCorrespondences.get()) {
-    			System.out.println(String.format("%s: [%d]%s", web.getTableNames().get(cor.getFirstRecord().getTableId()), cor.getFirstRecord().getColumnIndex(), cor.getFirstRecord().getHeader()));
+    			System.out.printf("%s: [%d]%s%n", web.getTableNames().get(cor.getFirstRecord().getTableId()), cor.getFirstRecord().getColumnIndex(), cor.getFirstRecord().getHeader());
     		}
     	}
     	
@@ -394,7 +397,36 @@ public class T2KMatch extends Executable implements Serializable {
     	 * One-to-one Matching
     	 ***********************************************/
     	instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
-    	schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
+
+        HashMap<Integer, HashMap<String, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> map = new HashMap<>();
+
+        for (Correspondence<MatchableTableColumn, MatchableTableRow> currCorr : schemaCorrespondences.get()) {
+
+            int tableId = currCorr.getFirstRecord().getTableId();
+            String header = currCorr.getFirstRecord().getHeader();
+
+            HashMap<String, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> stringCorrespondenceHashMap;
+            if (map.containsKey(tableId)) {
+                stringCorrespondenceHashMap = map.get(tableId);
+            } else {
+                stringCorrespondenceHashMap = new HashMap<>();
+            }
+
+            List<Correspondence<MatchableTableColumn, MatchableTableRow>> listOfCorrs;
+            if (stringCorrespondenceHashMap.containsKey(header)) {
+                listOfCorrs = stringCorrespondenceHashMap.get(header);
+            } else {
+                listOfCorrs = new ArrayList<>();
+            }
+
+            listOfCorrs.add(currCorr);
+            stringCorrespondenceHashMap.put(header, listOfCorrs);
+
+            map.put(tableId, stringCorrespondenceHashMap);
+        }
+
+        schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
+
 
     	/***********************************************
     	 *Table Filtering - Mapped Ratio Filter
@@ -434,7 +466,7 @@ public class T2KMatch extends Executable implements Serializable {
 		tripleGen.setComparatorForType(DataType.numeric, new MatchableTableRowComparator<>(new PercentageSimilarity(0.05), kb.getPropertyIndices(), 0.00));
 		tripleGen.setComparatorForType(DataType.date, new MatchableTableRowDateComparator(new WeightedDateSimilarity(1, 3, 5), kb.getPropertyIndices(), 0.9));
 		Processable<ExtractedTriple> triples = tripleGen.run(instanceCorrespondences, schemaCorrespondences);
-		System.out.println(String.format("Extracted %d existing (%.4f%% match values in KB) and %d new triples!", tripleGen.getExistingTripleCount(), tripleGen.getCorrectTripleCount()*100.0/(double)tripleGen.getExistingTripleCount(), tripleGen.getNewTripleCount()));
+		System.out.printf("Extracted %d existing (%.4f%% match values in KB) and %d new triples!%n", tripleGen.getExistingTripleCount(), tripleGen.getCorrectTripleCount()*100.0/(double)tripleGen.getExistingTripleCount(), tripleGen.getNewTripleCount());
 		ExtractedTriple.writeCSV(new File(results, "extracted_triples.csv"), triples.get());
 		
 		//TODO add the correspondences to the tables and write them to the disk
@@ -446,16 +478,16 @@ public class T2KMatch extends Executable implements Serializable {
     		instanceCorrespondences.distinct();
 	    	MatchingEvaluator<MatchableTableRow, MatchableTableColumn> instanceEvaluator = new MatchingEvaluator<>(false);
 	    	Collection<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondencesCollection = instanceCorrespondences.get();
-	    	System.out.println(String.format("%d %s instance correspondences", instanceCorrespondencesCollection.size(), name));
+	    	System.out.printf("%d %s instance correspondences%n", instanceCorrespondencesCollection.size(), name);
 	    	instancePerf = instanceEvaluator.evaluateMatching(instanceCorrespondencesCollection, instanceGs);
     	}
 
 		if(instancePerf!=null) {
 			System.out
-			.println(String.format(
-					"Instance Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f",
+			.printf(
+                "Instance Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
 					instancePerf.getPrecision(), instancePerf.getRecall(),
-					instancePerf.getF1()));
+					instancePerf.getF1());
 		}
     }
     
@@ -465,16 +497,16 @@ public class T2KMatch extends Executable implements Serializable {
 			schemaCorrespondences.distinct();
 			MatchingEvaluator<MatchableTableColumn, MatchableTableRow> schemaEvaluator = new MatchingEvaluator<>(false);
 			Collection<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondencesCollection = schemaCorrespondences.get();
-			System.out.println(String.format("%d %s schema correspondences", schemaCorrespondencesCollection.size(), name));
+			System.out.printf("%d %s schema correspondences%n", schemaCorrespondencesCollection.size(), name);
 			schemaPerf = schemaEvaluator.evaluateMatching(schemaCorrespondencesCollection, schemaGs);
 		}
 		
 		if(schemaPerf!=null) {
 			System.out
-			.println(String.format(
-					"Schema Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f",
+			.printf(
+                "Schema Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
 					schemaPerf.getPrecision(), schemaPerf.getRecall(),
-					schemaPerf.getF1()));
+					schemaPerf.getF1());
 		}	
     }
     
@@ -484,16 +516,16 @@ public class T2KMatch extends Executable implements Serializable {
 			classCorrespondences.distinct();
 			MatchingEvaluator<MatchableTable, MatchableTableColumn> classEvaluator = new MatchingEvaluator<>(false);
 			Collection<Correspondence<MatchableTable, MatchableTableColumn>> classCorrespondencesCollection = classCorrespondences.get();
-			System.out.println(String.format("%d %s class correspondences", classCorrespondencesCollection.size(), name));
+			System.out.printf("%d %s class correspondences%n", classCorrespondencesCollection.size(), name);
 			classPerf = classEvaluator.evaluateMatching(classCorrespondencesCollection, classGs);
 		}
 		
 		if(classPerf!=null) {
 			System.out
-			.println(String.format(
-					"Class Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f",
+			.printf(
+                "Class Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
 					classPerf.getPrecision(), classPerf.getRecall(),
-					classPerf.getF1()));
+					classPerf.getF1());
 		}
     }
     
@@ -587,7 +619,7 @@ public class T2KMatch extends Executable implements Serializable {
 		
 		System.out.println("Candidates per Table:");
 		for(final Pair<String, Integer> p : counts.get()) {
-			System.out.println(String.format("\t%s\t%d", p.getFirst(), p.getSecond()));
+			System.out.printf("\t%s\t%d%n", p.getFirst(), p.getSecond());
 			
 			Collection<Pair<String, Integer>> classCounts = Q.sort(Pair.fromMap(classesByTable.get(p.getFirst())), new Comparator<Pair<String, Integer>>() {
 
@@ -597,14 +629,14 @@ public class T2KMatch extends Executable implements Serializable {
 				}
 			});
 			
-			System.out.println(String.format("\t\t%s", StringUtils.join(Q.project(classCounts, new Func<String, Pair<String, Integer>>() {
+			System.out.printf("\t\t%s%n", StringUtils.join(Q.project(classCounts, new Func<String, Pair<String, Integer>>() {
 
 				@Override
 				public String invoke(Pair<String, Integer> in) {
 					return String.format("%s: %.4f%%", in.getFirst(), in.getSecond()*100.0/(double)p.getSecond());
 				}
-				
-			}), ", ")));
+
+			}), ", "));
 		}
     	
     }
