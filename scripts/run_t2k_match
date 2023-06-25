@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JAR="$HOME/lib/t2kmatch-2.0-jar-with-dependencies.jar"
+JAR="$HOME/lib/t2kmatch-2.1-jar-with-dependencies.jar"
 CLS="de.uni_mannheim.informatik.dws.t2k.match.T2KMatch"
 
 # required parameters: Knowledge Base, Web Tables and Ontology (class hierarchy)
@@ -23,4 +23,4 @@ RES="../output/"
 
 mkdir $RES
 
-java -Xmx7G -cp $JAR $CLS -sf $SF -kb $KB -ontology $ONT -web $WEB -index $IDX -classGS $GS_CLS -identityGS $GS_INST -schemaGS $GS_PROP -results $RES -verbose > $RES/log.txt 2>&1
+java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000 -Xmx7G -cp $JAR $CLS -sf $SF -kb $KB -ontology $ONT -web $WEB -index $IDX -classGS $GS_CLS -identityGS $GS_INST -schemaGS $GS_PROP -results $RES -verbose > $RES/log.txt 2>&1

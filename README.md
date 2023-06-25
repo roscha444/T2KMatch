@@ -9,7 +9,7 @@ Many web sites provide data in the form of HTML tables. Millions of such data ta
 To run T2K Match, use the `run_t2k_match` script in the scripts directory.
 1. Copy the compiled T2K Match jar file to the /lib/ directory in your home or change the path in the script file
 ```bash
-JAR="$HOME/lib/t2kmatch-2.0-jar-with-dependencies.jar"
+JAR="$HOME/lib/t2kmatch-2.1-jar-with-dependencies.jar"
 ```
 2. Unzip the files in the data directory
 ```bash
