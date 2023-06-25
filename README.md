@@ -1,3 +1,7 @@
+### ==============================================================
+#### THIS REPOSITORY IS A COPY OF https://github.com/olehmberg/T2KMatch
+### ==============================================================
+
 # T2K Match
 
 T2K Match [1] is matching algorithm optimised to match millions of web tables against a central knowledge base.
