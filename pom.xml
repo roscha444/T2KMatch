@@ -68,9 +68,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>de.uni_mannheim.informatik.dws</groupId>
-			<artifactId>winter</artifactId>
-			<version>1.2</version>
+			<groupId>de.uni-mannheim.informatik.dws.winter</groupId>
+			<artifactId>winter-framework</artifactId>
+			<version>1.4.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>

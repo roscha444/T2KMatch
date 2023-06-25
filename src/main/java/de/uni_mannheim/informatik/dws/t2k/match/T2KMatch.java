@@ -1,5 +1,6 @@
 package de.uni_mannheim.informatik.dws.t2k.match;
 
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -339,6 +340,14 @@ public class T2KMatch extends Executable implements Serializable {
         IdentityResolution identityResolution = new IdentityResolution(matchingEngine, web, kb, sf);
         UpdateSchemaCorrespondences updateSchema = new UpdateSchemaCorrespondences();
 
+        /***********************************************
+         * Similarity Flooding - Structure Based
+         ***********************************************/
+        MatchingLogger.printHeader("Similarity Flooding - Structure Based");
+
+        SimilarityFloodingAlgorithm similarityFloodingAlgorithm = new SimilarityFloodingAlgorithm(null, null);
+        evaluateSchemaCorrespondences(schemaCorrespondences, "similarity-flooding");
+
         int iteration = 0;
         do { // iterative matching loop
             /***********************************************
@@ -445,7 +454,7 @@ public class T2KMatch extends Executable implements Serializable {
          * Evaluation
          ***********************************************/
         evaluateInstanceCorrespondences(instanceCorrespondences, "");
-        matchingEngine.getMaximumWeightGlobalSchemaMatching(schemaCopy);
+        evaluateSchemaCorrespondences(schemaCorrespondences, "");
         evaluateClassCorrespondences(createClassCorrespondence(finalClassPerTable), "");
 
         /***********************************************
@@ -528,6 +537,7 @@ public class T2KMatch extends Executable implements Serializable {
                     classPerf.getPrecision(), classPerf.getRecall(),
                     classPerf.getF1());
         }
+
     }
     
     protected Processable<Correspondence<MatchableTable, MatchableTableColumn>> createClassCorrespondences(Map<Integer, Set<String>> classesPerTable) {

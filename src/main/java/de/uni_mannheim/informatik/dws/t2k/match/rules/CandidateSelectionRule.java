@@ -2,8 +2,8 @@ package de.uni_mannheim.informatik.dws.t2k.match.rules;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.Comparator;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.FilteringMatchingRule;
+import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.Matchable;
 import de.uni_mannheim.informatik.dws.winter.processing.Processable;
@@ -20,7 +20,7 @@ public class CandidateSelectionRule extends FilteringMatchingRule<MatchableTable
 	private static final long serialVersionUID = 1L;
 	private Comparator<MatchableTableRow, MatchableTableColumn> comparator = null;
 
-	private int rdfsLabelId;
+	private final int rdfsLabelId;
     
 	public Comparator<MatchableTableRow, MatchableTableColumn> getComparator() {
 		return comparator;

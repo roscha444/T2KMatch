@@ -2,7 +2,7 @@ package de.uni_mannheim.informatik.dws.t2k.match.comparators;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.Comparator;
+import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.Matchable;
 import de.uni_mannheim.informatik.dws.winter.similarity.SimilarityMeasure;
@@ -14,7 +14,7 @@ import de.uni_mannheim.informatik.dws.winter.similarity.SimilarityMeasure;
  * @author Oliver Lehmberg (oli@dwslab.de)
  *
  */
-public class SchemaLabelComparator implements Comparator<MatchableTableColumn, MatchableTableRow>{
+public class SchemaLabelComparator implements Comparator<MatchableTableColumn, MatchableTableRow> {
 
 	private static final long serialVersionUID = 1L;
 	private SimilarityMeasure<String> similarity = null;

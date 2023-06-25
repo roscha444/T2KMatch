@@ -1,12 +1,12 @@
 package de.uni_mannheim.informatik.dws.t2k.match.comparators;
 
+import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
 import de.uni_mannheim.informatik.dws.t2k.match.data.SurfaceForms;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.Comparator;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.Matchable;
 import de.uni_mannheim.informatik.dws.winter.similarity.SimilarityMeasure;
@@ -18,7 +18,7 @@ import de.uni_mannheim.informatik.dws.winter.similarity.SimilarityMeasure;
  * @author Sanikumar
  *
  */
-public class KeyValueComparatorBasedOnSurfaceForms implements Comparator<MatchableTableRow, MatchableTableColumn>{
+public class KeyValueComparatorBasedOnSurfaceForms implements Comparator<MatchableTableRow, MatchableTableColumn> {
 
 	private static final long serialVersionUID = 1L;
 	

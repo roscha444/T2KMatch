@@ -1,11 +1,11 @@
 package de.uni_mannheim.informatik.dws.t2k.match.rules;
 
+import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import java.util.HashMap;
 
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.Comparator;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.FilteringMatchingRule;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.Matchable;
@@ -23,10 +23,10 @@ import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 public class DataTypeDependentRecordMatchingRule extends FilteringMatchingRule<MatchableTableRow, MatchableTableColumn> {
 
 	private static final long serialVersionUID = -2211353700799708359L;
-	private HashMap<DataType, MatchableTableRowComparator<?>> comparators;
+	private final HashMap<DataType, MatchableTableRowComparator<?>> comparators;
 	private Comparator<MatchableTableRow, MatchableTableColumn> keyValueComparator;
 	private double keyValueWeight = 1.0/3.0;
-	private int rdfsLabelId;
+	private final int rdfsLabelId;
 	
 	public void setComparatorForType(DataType type, MatchableTableRowComparator<?> comparator) {
 		comparators.put(type, comparator);
