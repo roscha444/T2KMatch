@@ -48,10 +48,10 @@ public class EvaluateCorrespondences extends Executable {
 	private String canonicalizationLocation;
 	
 	@Parameter(names = "-gsComplete")
-	private boolean gsIsComplete = false;
+	private final boolean gsIsComplete = false;
 	
 	@Parameter(names = "-verbose")
-	private boolean isVerbose = false;
+	private final boolean isVerbose = false;
 	
 	public static void main(String[] args) throws IOException {
 		EvaluateCorrespondences eval = new EvaluateCorrespondences();
@@ -80,16 +80,16 @@ public class EvaluateCorrespondences extends Executable {
 			}
 		}
 		
-		System.out.println(String.format("%,d schema correspondences", cors.size()));
+		System.out.printf("%,d schema correspondences%n", cors.size());
 		
-		MatchingEvaluator<RecordId, RecordId> eval = new MatchingEvaluator<>(isVerbose);
+		MatchingEvaluator<RecordId, RecordId> eval = new MatchingEvaluator<>();
 		Performance perf = eval.evaluateMatching(cors.get(), gs);
 		
 		System.out
-		.println(String.format(
-				"Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f",
+		.printf(
+            "Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
 				perf.getPrecision(), perf.getRecall(),
-				perf.getF1()));
+				perf.getF1());
 	}
 	
 }

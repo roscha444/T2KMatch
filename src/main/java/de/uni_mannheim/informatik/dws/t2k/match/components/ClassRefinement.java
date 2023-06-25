@@ -40,11 +40,11 @@ import de.uni_mannheim.informatik.dws.winter.utils.query.Q;
  */
 public class ClassRefinement {
 
-	private Map<Integer, Map<Integer, Integer>> propertyIndices;
-	private Map<String, String> classHierarchy;
-	private Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences;
-	private Map<Integer, Set<String>> classesPerTable;
-	private Map<String, Integer> classIds;
+	private final Map<Integer, Map<Integer, Integer>> propertyIndices;
+	private final Map<String, String> classHierarchy;
+	private final Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences;
+	private final Map<Integer, Set<String>> classesPerTable;
+	private final Map<String, Integer> classIds;
 	
 	private Map<Integer, String> finalClassPerTable;
 	/**
@@ -111,15 +111,20 @@ public class ClassRefinement {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Double initialise(Pair<Integer, String> keyValue) {
-				return 0.0;
+			public Pair<Double, Object> initialise(Pair<Integer, String> keyValue) {
+				return stateless(0.0);
 			}
-			
-			@Override
-			public Double aggregate(Double previousResult, Double record) {
-				return previousResult+record;
+
+            @Override
+			public Pair<Double, Object> aggregate(Double previousResult, Double record, Object state) {
+				return new Pair<>(previousResult+record, state);
 			}
-		};
+
+            @Override
+            public Pair<Double, Object> merge(Pair<Double, Object> pair, Pair<Double, Object> pair1) {
+                return new Pair<>(pair.getFirst() + pair1.getFirst(), pair.getSecond());
+            }
+        };
 		Processable<Pair<Pair<Integer, String>, Double>> classScores = schemaCorrespondences.aggregate(groupByClassProperty, sumSimilarityScore);
 		
 		// now we have all class scores for all tables
@@ -154,23 +159,32 @@ public class ClassRefinement {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Pair<String, Double> initialise(Integer keyValue) {
-				return null;
+			public Pair<Pair<String, Double>, Object> initialise(Integer keyValue) {
+				return stateless(null);
 			}
 			
 			@Override
-			public Pair<String, Double> aggregate(Pair<String, Double> previousResult, Pair<String, Double> record) {
-				if(previousResult==null) {
-					return record;
+			public Pair<Pair<String, Double>, Object> aggregate(Pair<String, Double> previousResult, Pair<String, Double> record, Object state) {
+				if(previousResult == null) {
+					return new Pair<>(record, state);
 				} else {
-					if(record.getSecond()>previousResult.getSecond()) {
-						return record;
+					if(record.getSecond() > previousResult.getSecond()) {
+					    return new Pair<>(record, state);
 					} else {
-						return previousResult;
+					    return new Pair<>(previousResult, state);
 					}
 				}
 			}
-		};
+
+            @Override
+            public Pair<Pair<String, Double>, Object> merge(Pair<Pair<String, Double>, Object> pair, Pair<Pair<String, Double>, Object> pair1) {
+                if(pair.getFirst().getSecond() > pair1.getFirst().getSecond()) {
+                    return pair;
+                } else {
+                    return pair1;
+                }
+            }
+        };
 		Processable<Pair<Integer, Pair<String, Double>>> bestClassPerTable = classScores.aggregate(groupByTableId, selectMaxClass);
 		
 		// we have selected the best class for each table, now bring it into the correct data format
