@@ -118,6 +118,7 @@ public class WebTables implements Serializable{
 	
     public void load(File location) {
     	CsvTableParser csvParser = new CsvTableParser();
+        csvParser.setCheckForList(false);
     	JsonTableParser jsonParser = new JsonTableParser();
     	
     	jsonParser.setConvertValues(convertValues);
