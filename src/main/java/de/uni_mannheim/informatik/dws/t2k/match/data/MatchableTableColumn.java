@@ -1,5 +1,6 @@
 package de.uni_mannheim.informatik.dws.t2k.match.data;
 
+import de.uni_mannheim.informatik.dws.winter.webtables.SFMatchable;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ import de.uni_mannheim.informatik.dws.winter.webtables.TableColumnStatistics;
  * @author Oliver Lehmberg (oli@dwslab.de)
  *
  */
-public class MatchableTableColumn implements Matchable, Fusible<MatchableTableColumn>, Comparable<MatchableTableColumn>, Serializable {
+public class MatchableTableColumn extends SFMatchable implements Matchable, Fusible<MatchableTableColumn>, Comparable<MatchableTableColumn>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 	protected int tableId;
@@ -78,19 +79,21 @@ public class MatchableTableColumn implements Matchable, Fusible<MatchableTableCo
 	}
 	
 	public MatchableTableColumn() {
-		
+		super(null);
 	}
 	
 	public MatchableTableColumn(int tableId, int columnIndex, String header, DataType type){
+        super(type);
 		this.tableId = tableId;
 		this.columnIndex = columnIndex;
 		this.id = "";
 		this.header = header;
 		this.type = type;
 	}
-	
+
 	public MatchableTableColumn(int tableId, TableColumn c) {
-		this.tableId = tableId;
+        super(c.getDataType());
+        this.tableId = tableId;
 		this.columnIndex = c.getColumnIndex();
 		this.type = c.getDataType();
 		this.header = c.getHeader();
