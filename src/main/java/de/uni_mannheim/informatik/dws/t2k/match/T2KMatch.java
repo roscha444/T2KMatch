@@ -15,6 +15,7 @@ import de.uni_mannheim.informatik.dws.t2k.match.components.DuplicateBasedSchemaM
 import de.uni_mannheim.informatik.dws.t2k.match.components.IdentityResolution;
 import de.uni_mannheim.informatik.dws.t2k.match.components.LabelBasedSchemaMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.SFLabelBasedMatching;
+import de.uni_mannheim.informatik.dws.t2k.match.components.SFValueBasedMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.TableFiltering;
 import de.uni_mannheim.informatik.dws.t2k.match.components.UpdateSchemaCorrespondences;
 import de.uni_mannheim.informatik.dws.t2k.match.data.ExtractedTriple;
@@ -320,7 +321,7 @@ public class T2KMatch extends Executable implements Serializable {
         CandidateFiltering classFilter = new CandidateFiltering(classesPerTable, kb.getClassIndices(), instanceCorrespondences);
         instanceCorrespondences = classFilter.run();
         evaluateInstanceCorrespondences(instanceCorrespondences, "property refined candidate");
-        if(verbose) {
+        if (verbose) {
             printCandidateStatistics(instanceCorrespondences);
         }
 
@@ -328,10 +329,12 @@ public class T2KMatch extends Executable implements Serializable {
          *Iterative Matching
          ***********************************************/
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> labelBasedSchemaCorrespondences = null;
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfBasedSchemaCorrespondence = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfLabelBasedSchemaCorrespondence = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfValueBasedSchemaCorrespondence = null;
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> lastSchemaCorrespondences = null;
 
         SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
+        SFValueBasedMatching sfValueBasedMatching = new SFValueBasedMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         LabelBasedSchemaMatching labelBasedSchema = new LabelBasedSchemaMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         DuplicateBasedSchemaMatching duplicateBasedSchema = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
         CombineSchemaCorrespondences combineSchema = new CombineSchemaCorrespondences(keyCorrespondences);
@@ -341,6 +344,24 @@ public class T2KMatch extends Executable implements Serializable {
 
         int iteration = 0;
         do { // iterative matching loop
+
+            /***********************************************
+             * Similarity Flooding - Structure Based
+             ***********************************************/
+            MatchingLogger.printHeader("Similarity Flooding - Structure Based");
+            sfLabelBasedMatching.setInstanceCorrespondences(instanceCorrespondences);
+            sfLabelBasedSchemaCorrespondence = sfLabelBasedMatching.run();
+            evaluateSchemaCorrespondences(sfLabelBasedSchemaCorrespondence, "label-similarity-flooding");
+
+            /***********************************************
+             * Similarity Flooding - Value Based
+             ***********************************************/
+            MatchingLogger.printHeader("Similarity Flooding - Value Based");
+            sfValueBasedMatching.setInstanceCorrespondences(instanceCorrespondences);
+            sfValueBasedMatching.setSf(sf);
+            sfValueBasedSchemaCorrespondence = sfValueBasedMatching.run();
+            evaluateSchemaCorrespondences(sfValueBasedSchemaCorrespondence, "value-similarity-flooding");
+
             /***********************************************
              * Schema Matching - Label Based
              ***********************************************/
@@ -348,14 +369,6 @@ public class T2KMatch extends Executable implements Serializable {
             labelBasedSchema.setInstanceCorrespondences(instanceCorrespondences);
             labelBasedSchemaCorrespondences = labelBasedSchema.run();
             evaluateSchemaCorrespondences(labelBasedSchemaCorrespondences, "label-based");
-
-            /***********************************************
-             * Similarity Flooding - Structure Based
-             ***********************************************/
-            MatchingLogger.printHeader("Similarity Flooding - Structure Based");
-            sfLabelBasedMatching.setInstanceCorrespondences(instanceCorrespondences);
-            sfBasedSchemaCorrespondence = sfLabelBasedMatching.run();
-            evaluateSchemaCorrespondences(sfBasedSchemaCorrespondence, "similarity-flooding");
 
             /***********************************************
              * Schema Matching - Duplicate Based
@@ -392,12 +405,12 @@ public class T2KMatch extends Executable implements Serializable {
             identityResolution.setSchemaCorrespondences(schemaCorrespondences);
             instanceCorrespondences = identityResolution.run();
             evaluateInstanceCorrespondences(instanceCorrespondences, "final");
-            if(verbose) {
+            if (verbose) {
                 printCandidateStatistics(instanceCorrespondences);
             }
 
             lastSchemaCorrespondences = schemaCorrespondences;
-        } while(++iteration<numIterations); // loop for iterative part
+        } while (++iteration < numIterations); // loop for iterative part
 
         /***********************************************
          * One-to-one Matching
