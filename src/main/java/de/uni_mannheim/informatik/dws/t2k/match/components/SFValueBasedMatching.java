@@ -138,15 +138,11 @@ public class SFValueBasedMatching {
                             sim = Math.max(s, sim);
                         }
 
-                        result += sim;
+                        result = Math.max(result, sim);
                         countResult++;
                     }
                 }
 
-                result = result / countResult;
-                if (Double.isNaN(result)) {
-                    return Double.MIN_VALUE;
-                }
                 return result;
             }
             return Double.MIN_VALUE;
@@ -218,7 +214,8 @@ public class SFValueBasedMatching {
                         SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB,
                             new SFComparatorWebJaccard(oldToNew, tableToCorrespondenceMap, surfaceForms, kb));
                         sf.setRemoveOid(true);
-                        sf.setMinSim(Double.MIN_VALUE);
+                        sf.setMinSim(0.001);
+                        sf.setDefaultSim(Double.MIN_VALUE);
                         sf.run();
                         correspondences.addAll(sf.getResult().get());
                     }
