@@ -343,7 +343,7 @@ public class T2KMatch extends Executable implements Serializable {
 
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> lastSchemaCorrespondences = null;
 
-        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(web, kb, sf, classesPerTable);
+        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(web, kb, classesPerTable);
         SFValueBasedMatching sfValueBasedMatching = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
         SFValueBasedMatching sfValueBasedMatchingInverse = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
 
