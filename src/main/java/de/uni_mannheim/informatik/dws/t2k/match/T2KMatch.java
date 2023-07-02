@@ -14,10 +14,10 @@ import de.uni_mannheim.informatik.dws.t2k.match.components.CombineSchemaCorrespo
 import de.uni_mannheim.informatik.dws.t2k.match.components.DuplicateBasedSchemaMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.IdentityResolution;
 import de.uni_mannheim.informatik.dws.t2k.match.components.LabelBasedSchemaMatching;
-import de.uni_mannheim.informatik.dws.t2k.match.components.SFLabelBasedMatching;
-import de.uni_mannheim.informatik.dws.t2k.match.components.SFValueBasedMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.TableFiltering;
 import de.uni_mannheim.informatik.dws.t2k.match.components.UpdateSchemaCorrespondences;
+import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.label.SFLabelBasedMatchingWB2KB;
+import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value.SFValueBasedMatchingWB2KB;
 import de.uni_mannheim.informatik.dws.t2k.match.data.ExtractedTriple;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTable;
@@ -343,9 +343,9 @@ public class T2KMatch extends Executable implements Serializable {
 
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> lastSchemaCorrespondences = null;
 
-        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(web, kb, classesPerTable);
-        SFValueBasedMatching sfValueBasedMatching = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
-        SFValueBasedMatching sfValueBasedMatchingInverse = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
+        SFLabelBasedMatchingWB2KB sfLabelBasedMatchingWB2KB = new SFLabelBasedMatchingWB2KB(web, kb, classesPerTable);
+        SFValueBasedMatchingWB2KB sfValueBasedMatchingWB2KB = new SFValueBasedMatchingWB2KB(web, kb, classesPerTable, instanceCorrespondences);
+        SFValueBasedMatchingWB2KB sfValueBasedMatchingWB2KBInverse = new SFValueBasedMatchingWB2KB(web, kb, classesPerTable, instanceCorrespondences);
 
         LabelBasedSchemaMatching labelBasedSchema = new LabelBasedSchemaMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         DuplicateBasedSchemaMatching duplicateBasedSchema = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
@@ -361,25 +361,25 @@ public class T2KMatch extends Executable implements Serializable {
              * Similarity Flooding - Label Based
              ***********************************************/
             MatchingLogger.printHeader("Similarity Flooding - Structure Based");
-            sfLabelBasedSchemaCorrespondence = sfLabelBasedMatching.run();
+            sfLabelBasedSchemaCorrespondence = sfLabelBasedMatchingWB2KB.run();
             evaluateSchemaCorrespondences(sfLabelBasedSchemaCorrespondence, "label-similarity-flooding");
 
             /***********************************************
              * Similarity Flooding - Value Based
              ***********************************************/
             MatchingLogger.printHeader("Similarity Flooding - Value Based");
-            sfValueBasedMatching.setInstanceCorrespondences(instanceCorrespondences);
-            sfValueBasedMatching.setSf(sf);
-            sfValueBasedSchemaCorrespondence = sfValueBasedMatching.run();
+            sfValueBasedMatchingWB2KB.setInstanceCorrespondences(instanceCorrespondences);
+            sfValueBasedMatchingWB2KB.setSurfaceForms(sf);
+            sfValueBasedSchemaCorrespondence = sfValueBasedMatchingWB2KB.run();
             evaluateSchemaCorrespondences(sfValueBasedSchemaCorrespondence, "value-similarity-flooding");
 
             /***********************************************
              * Similarity Flooding - Value Based Inverse
              ***********************************************/
             MatchingLogger.printHeader("Similarity Flooding - Value Based");
-            sfValueBasedMatchingInverse.setInstanceCorrespondences(instanceCorrespondences);
-            sfValueBasedMatchingInverse.setSf(sf);
-            sfValueBasedSchemaCorrespondenceInverse = sfValueBasedMatchingInverse.run();
+            sfValueBasedMatchingWB2KBInverse.setInstanceCorrespondences(instanceCorrespondences);
+            sfValueBasedMatchingWB2KBInverse.setSurfaceForms(sf);
+            sfValueBasedSchemaCorrespondenceInverse = sfValueBasedMatchingWB2KBInverse.run();
             evaluateSchemaCorrespondences(sfValueBasedSchemaCorrespondenceInverse, "value-similarity-flooding INVERSE");
 
             /***********************************************
