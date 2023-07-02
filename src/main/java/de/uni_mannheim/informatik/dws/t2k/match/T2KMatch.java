@@ -329,12 +329,24 @@ public class T2KMatch extends Executable implements Serializable {
          *Iterative Matching
          ***********************************************/
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> labelBasedSchemaCorrespondences = null;
+
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfValueBasedSchemaCorrespondenceInverse = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> combinedSfLabelBasedSchemaCorrespondenceInverse = null;
+
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfLabelBasedSchemaCorrespondence = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> combinedSfLabelBasedSchemaCorrespondence = null;
+
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfValueBasedSchemaCorrespondence = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> combinedSfValueBasedSchemaCorrespondence = null;
+
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfAndSchemaCorr = null;
+
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> lastSchemaCorrespondences = null;
 
-        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(web, kb, classesPerTable);
+        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(web, kb, sf, classesPerTable);
         SFValueBasedMatching sfValueBasedMatching = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
+        SFValueBasedMatching sfValueBasedMatchingInverse = new SFValueBasedMatching(web, kb, classesPerTable, instanceCorrespondences);
+
         LabelBasedSchemaMatching labelBasedSchema = new LabelBasedSchemaMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         DuplicateBasedSchemaMatching duplicateBasedSchema = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
         CombineSchemaCorrespondences combineSchema = new CombineSchemaCorrespondences(keyCorrespondences);
@@ -346,7 +358,7 @@ public class T2KMatch extends Executable implements Serializable {
         do { // iterative matching loop
 
             /***********************************************
-             * Similarity Flooding - Structure Based
+             * Similarity Flooding - Label Based
              ***********************************************/
             MatchingLogger.printHeader("Similarity Flooding - Structure Based");
             sfLabelBasedSchemaCorrespondence = sfLabelBasedMatching.run();
@@ -360,6 +372,15 @@ public class T2KMatch extends Executable implements Serializable {
             sfValueBasedMatching.setSf(sf);
             sfValueBasedSchemaCorrespondence = sfValueBasedMatching.run();
             evaluateSchemaCorrespondences(sfValueBasedSchemaCorrespondence, "value-similarity-flooding");
+
+            /***********************************************
+             * Similarity Flooding - Value Based Inverse
+             ***********************************************/
+            MatchingLogger.printHeader("Similarity Flooding - Value Based");
+            sfValueBasedMatchingInverse.setInstanceCorrespondences(instanceCorrespondences);
+            sfValueBasedMatchingInverse.setSf(sf);
+            sfValueBasedSchemaCorrespondenceInverse = sfValueBasedMatchingInverse.run();
+            evaluateSchemaCorrespondences(sfValueBasedSchemaCorrespondenceInverse, "value-similarity-flooding INVERSE");
 
             /***********************************************
              * Schema Matching - Label Based
@@ -378,18 +399,36 @@ public class T2KMatch extends Executable implements Serializable {
             evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based");
 
             /***********************************************
-             * Combine Schema Correspondences
+             * Combine Schema Correspondences (LabelBased <-> Schema Correspondences)
              ***********************************************/
-            MatchingLogger.printHeader("Combine Schema Correspondences");
+            MatchingLogger.printHeader("Combine Schema Correspondences (LabelBased <-> Schema Correspondences)");
             combineSchema.setSchemaCorrespondences(schemaCorrespondences);
             combineSchema.setLabelBasedSchemaCorrespondences(labelBasedSchemaCorrespondences);
             schemaCorrespondences = combineSchema.run();
             evaluateSchemaCorrespondences(schemaCorrespondences, "combined");
 
             /***********************************************
+             * Combine Schema Correspondences (SF Value Based <-> Schema Correspondences)
+             ***********************************************/
+            MatchingLogger.printHeader("Combine Schema Correspondences (SF Value Based <-> Schema Correspondences)");
+            combineSchema.setSchemaCorrespondences(schemaCorrespondences);
+            combineSchema.setLabelBasedSchemaCorrespondences(sfValueBasedSchemaCorrespondence);
+            combinedSfValueBasedSchemaCorrespondence = combineSchema.run();
+            evaluateSchemaCorrespondences(combinedSfValueBasedSchemaCorrespondence, "combined sf value");
+
+            /***********************************************
+             * Combine Schema Correspondences (SF Label Based <-> Schema Correspondences)
+             ***********************************************/
+            MatchingLogger.printHeader("Combine Schema Correspondences (SF Label Based <-> Schema Correspondences)");
+            combineSchema.setSchemaCorrespondences(schemaCorrespondences);
+            combineSchema.setLabelBasedSchemaCorrespondences(sfLabelBasedSchemaCorrespondence);
+            combinedSfLabelBasedSchemaCorrespondence = combineSchema.run();
+            evaluateSchemaCorrespondences(combinedSfLabelBasedSchemaCorrespondence, "combined sf label");
+
+            /***********************************************
              * Iterative - Update Schema Correspondences
              ***********************************************/
-            if(lastSchemaCorrespondences!=null) {
+            if (lastSchemaCorrespondences != null) {
                 updateSchema.setSchemaCorrespondences(lastSchemaCorrespondences);
                 updateSchema.setNewSchemaCorrespondences(schemaCorrespondences);
                 schemaCorrespondences = updateSchema.run();
@@ -444,17 +483,30 @@ public class T2KMatch extends Executable implements Serializable {
         }
 
         schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
+        combinedSfValueBasedSchemaCorrespondence = matchingEngine.getTopKSchemaCorrespondences(combinedSfValueBasedSchemaCorrespondence, 1, 0.0);
+        combinedSfLabelBasedSchemaCorrespondence = matchingEngine.getTopKSchemaCorrespondences(combinedSfLabelBasedSchemaCorrespondence, 1, 0.0);
 
         /***********************************************
          *Table Filtering - Mapped Ratio Filter
          ***********************************************/
-        if(par_mappedRatio>0.0) {
+        if (par_mappedRatio > 0.0) {
             TableFiltering tableFilter = new TableFiltering(web, instanceCorrespondences, classesPerTable, schemaCorrespondences);
             tableFilter.setMinMappedRatio(par_mappedRatio);
             tableFilter.run();
             classesPerTable = tableFilter.getClassesPerTable();
             instanceCorrespondences = tableFilter.getInstanceCorrespondences();
             schemaCorrespondences = tableFilter.getSchemaCorrespondences();
+
+            // TODO check this
+            tableFilter = new TableFiltering(web, instanceCorrespondences, classesPerTable, combinedSfValueBasedSchemaCorrespondence);
+            tableFilter.setMinMappedRatio(par_mappedRatio);
+            tableFilter.run();
+            combinedSfValueBasedSchemaCorrespondence = tableFilter.getSchemaCorrespondences();
+
+            tableFilter = new TableFiltering(web, instanceCorrespondences, classesPerTable, combinedSfLabelBasedSchemaCorrespondence);
+            tableFilter.setMinMappedRatio(par_mappedRatio);
+            tableFilter.run();
+            combinedSfLabelBasedSchemaCorrespondence = tableFilter.getSchemaCorrespondences();
         }
 
         /***********************************************
@@ -462,6 +514,8 @@ public class T2KMatch extends Executable implements Serializable {
          ***********************************************/
         evaluateInstanceCorrespondences(instanceCorrespondences, "");
         evaluateSchemaCorrespondences(schemaCorrespondences, "");
+        evaluateSchemaCorrespondences(combinedSfValueBasedSchemaCorrespondence, "SF Value Based");
+        evaluateSchemaCorrespondences(combinedSfLabelBasedSchemaCorrespondence, "SF Label Based");
         evaluateClassCorrespondences(createClassCorrespondence(finalClassPerTable), "");
 
         /***********************************************
@@ -469,6 +523,7 @@ public class T2KMatch extends Executable implements Serializable {
          ***********************************************/
         new CSVCorrespondenceFormatter().writeCSV(new File(results, "instance_correspondences.csv"), instanceCorrespondences);
         new CSVCorrespondenceFormatter().writeCSV(new File(results, "schema_correspondences.csv"), schemaCorrespondences);
+        new CSVCorrespondenceFormatter().writeCSV(new File(results, "SF_schema_correspondences.csv"), combinedSfValueBasedSchemaCorrespondence);
 
         HashMap<Integer, String> inverseTableIndices = (HashMap<Integer, String>) MapUtils.invert(web.getTableIndices());
         CSVWriter csvWriter = new CSVWriter(new FileWriter(new File(results, "class_decision.csv")));

@@ -13,6 +13,7 @@ package de.uni_mannheim.informatik.dws.t2k.match.components;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
+import de.uni_mannheim.informatik.dws.t2k.match.data.SurfaceForms;
 import de.uni_mannheim.informatik.dws.t2k.match.data.WebTables;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
@@ -27,10 +28,13 @@ import de.uni_mannheim.informatik.dws.winter.processing.ProcessableCollection;
 import de.uni_mannheim.informatik.dws.winter.processing.RecordMapper;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
+import de.uni_mannheim.informatik.dws.winter.similarity.string.TokenizingJaccardSimilarity;
 import de.uni_mannheim.informatik.dws.winter.utils.MapUtils;
+import de.uni_mannheim.informatik.dws.winter.webtables.WebTablesStringNormalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,14 +52,32 @@ public class SFLabelBasedMatching {
 
     public static class SFComparatorWebJaccard implements Comparator<MatchableTableColumn, MatchableTableColumn> {
 
+        private SurfaceForms sf;
         private static final long serialVersionUID = 1L;
         private final GeneralisedStringJaccard similarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.2, 0.2);
         private ComparatorLogger comparisonLog;
+        private TokenizingJaccardSimilarity similarity2 = new TokenizingJaccardSimilarity();
+        LevenshteinSimilarity comparatorLevenshtein = new LevenshteinSimilarity();
 
+
+        public SFComparatorWebJaccard(SurfaceForms sf) {
+            this.sf = sf;
+        }
 
         @Override
         public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
-            return similarity.calculate(record1.getHeader(), record2.getHeader());
+            List<String> values1 = new LinkedList<>();
+
+            values1.add(record1.getHeader());
+            values1.addAll(sf.getSurfaceForms(WebTablesStringNormalizer.normaliseValue(record1.getHeader(), false)));
+
+            double sim = Double.MIN_VALUE;
+            for (String v2 : values1) {
+                double s = comparatorLevenshtein.calculate(v2, record2.getHeader());
+                sim = Math.max(s, sim);
+            }
+
+            return sim;
         }
 
         @Override
@@ -71,11 +93,13 @@ public class SFLabelBasedMatching {
     }
     private WebTables web;
     private KnowledgeBase kb;
+    private SurfaceForms sfs;
     private Map<Integer, Set<String>> classesPerTable;
 
-    public SFLabelBasedMatching(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable) {
+    public SFLabelBasedMatching(WebTables web, KnowledgeBase kb, SurfaceForms sfs, Map<Integer, Set<String>> classesPerTable) {
         this.web = web;
         this.kb = kb;
+        this.sfs = sfs;
         this.classesPerTable = classesPerTable;
     }
 
@@ -92,7 +116,8 @@ public class SFLabelBasedMatching {
                 for (String dbPediaClass : dbPediaClassesForTable) {
                     List<MatchableTableColumn> columnListKB = columnsPerKBTable.get(kb.getClassIds().get(dbPediaClass));
                     if (columnListKB != null && columnListKB.size() > 0) {
-                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB, new SFComparatorWebJaccard());
+                        columnListKB.removeIf(x -> x.getIdentifier().equals("URI"));
+                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB, new SFComparatorWebJaccard(sfs));
                         sf.setRemoveOid(true);
                         sf.setMinSim(0.01);
                         sf.run();

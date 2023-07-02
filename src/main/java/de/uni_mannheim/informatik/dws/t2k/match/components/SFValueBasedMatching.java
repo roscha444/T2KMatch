@@ -90,9 +90,9 @@ public class SFValueBasedMatching {
         @Override
         public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
 
-            MatchableTableRowComparatorBasedOnSurfaceForms stringSurfaceComparator = new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), 0.2, surfaceForms);
-            MatchableTableRowComparator doubleComparator = new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), 0.2);
-            MatchableTableRowDateComparator dateComparator = new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), 0.2);
+            MatchableTableRowComparatorBasedOnSurfaceForms stringSurfaceComparator = new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), 0.1, surfaceForms);
+            MatchableTableRowComparator doubleComparator = new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), 0.1);
+            MatchableTableRowDateComparator dateComparator = new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), 0.1);
 
             MatchableTableColumn secondRecord = oldToNew.get(record2);
             if (tableToCorrespondenceMap.containsKey(record1.getTableId()) && tableToCorrespondenceMap.get(record1.getTableId()).containsKey(secondRecord.getTableId())) {
