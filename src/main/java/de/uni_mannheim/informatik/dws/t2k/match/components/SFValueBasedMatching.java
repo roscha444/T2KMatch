@@ -158,9 +158,8 @@ public class SFValueBasedMatching {
         this.instanceCorrespondences = instanceCorrespondences;
     }
 
-    public SFValueBasedMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable,
+    public SFValueBasedMatching(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable,
         Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-        this.matchingEngine = matchingEngine;
         this.web = web;
         this.kb = kb;
         this.classesPerTable = classesPerTable;
@@ -199,7 +198,7 @@ public class SFValueBasedMatching {
                         SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB,
                             new SFComparatorWebJaccard(oldToNew, tableToCorrespondenceMap, surfaceForms, kb));
                         sf.setRemoveOid(true);
-                        sf.setMinSim(0.01);
+                        sf.setMinSim(0.001);
                         sf.run();
                         correspondences.addAll(sf.getResult().get());
                     }

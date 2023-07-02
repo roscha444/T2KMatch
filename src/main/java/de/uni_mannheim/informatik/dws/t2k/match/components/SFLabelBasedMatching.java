@@ -14,8 +14,6 @@ import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
 import de.uni_mannheim.informatik.dws.t2k.match.data.WebTables;
-import de.uni_mannheim.informatik.dws.t2k.similarity.WebJaccardStringSimilarity;
-import de.uni_mannheim.informatik.dws.winter.matching.MatchingEngine;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.ComparatorLogger;
@@ -27,6 +25,8 @@ import de.uni_mannheim.informatik.dws.winter.processing.Function;
 import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 import de.uni_mannheim.informatik.dws.winter.processing.ProcessableCollection;
 import de.uni_mannheim.informatik.dws.winter.processing.RecordMapper;
+import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
+import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
 import de.uni_mannheim.informatik.dws.winter.utils.MapUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +49,7 @@ public class SFLabelBasedMatching {
     public static class SFComparatorWebJaccard implements Comparator<MatchableTableColumn, MatchableTableColumn> {
 
         private static final long serialVersionUID = 1L;
-        private final WebJaccardStringSimilarity similarity = new WebJaccardStringSimilarity();
+        private final GeneralisedStringJaccard similarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.2, 0.2);
         private ComparatorLogger comparisonLog;
 
 
@@ -69,28 +69,14 @@ public class SFLabelBasedMatching {
         }
 
     }
-
-    private MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine;
     private WebTables web;
     private KnowledgeBase kb;
     private Map<Integer, Set<String>> classesPerTable;
-    private Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences;
 
-    /**
-     * @param instanceCorrespondences the instanceCorrespondences to set
-     */
-    public void setInstanceCorrespondences(
-        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-        this.instanceCorrespondences = instanceCorrespondences;
-    }
-
-    public SFLabelBasedMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable,
-        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-        this.matchingEngine = matchingEngine;
+    public SFLabelBasedMatching(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable) {
         this.web = web;
         this.kb = kb;
         this.classesPerTable = classesPerTable;
-        this.instanceCorrespondences = instanceCorrespondences;
     }
 
     public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> run() throws Exception {
