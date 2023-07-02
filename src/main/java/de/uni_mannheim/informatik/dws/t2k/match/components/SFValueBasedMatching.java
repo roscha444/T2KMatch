@@ -10,9 +10,6 @@
  */
 package de.uni_mannheim.informatik.dws.t2k.match.components;
 
-import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
-import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparatorBasedOnSurfaceForms;
-import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowDateComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
@@ -38,9 +35,11 @@ import de.uni_mannheim.informatik.dws.winter.similarity.numeric.DeviationSimilar
 import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
 import de.uni_mannheim.informatik.dws.winter.utils.MapUtils;
+import de.uni_mannheim.informatik.dws.winter.webtables.WebTablesStringNormalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -89,11 +88,6 @@ public class SFValueBasedMatching {
 
         @Override
         public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
-
-            MatchableTableRowComparatorBasedOnSurfaceForms stringSurfaceComparator = new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), 0.1, surfaceForms);
-            MatchableTableRowComparator doubleComparator = new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), 0.1);
-            MatchableTableRowDateComparator dateComparator = new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), 0.1);
-
             MatchableTableColumn secondRecord = oldToNew.get(record2);
             if (tableToCorrespondenceMap.containsKey(record1.getTableId()) && tableToCorrespondenceMap.get(record1.getTableId()).containsKey(secondRecord.getTableId())) {
 
@@ -110,26 +104,52 @@ public class SFValueBasedMatching {
                     int columnIndexSecondTable = record2.getColumnIndex();
                     DataType secondColumnType = corr.getSecondRecord().getType(secondRecord.getColumnIndex());
 
+                    surfaceForms.loadIfRequired();
+
                     if (firstColumnType != null && secondColumnType != null) {
-                        if (firstColumnType.equals(secondColumnType)) {
-                            countResult++;
-                            if (firstColumnType.equals(DataType.string)) {
-                                result += stringSurfaceComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), columnIndexFirstTable, columnIndexSecondTable);
-                            } else if (firstColumnType.equals(DataType.numeric)) {
-                                result += doubleComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
-                            } else if (firstColumnType.equals(DataType.date)) {
-                                result += dateComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
-                            }
+
+                        Map<Integer, Integer> indexTranslation = kb.getPropertyIndices().get(secondRecord.getTableId());
+                        Integer translatedIndex = indexTranslation.get(columnIndexSecondTable);
+
+                        String value1 = corr.getFirstRecord().get(columnIndexFirstTable).toString();
+                        String value2 = corr.getSecondRecord().get(translatedIndex).toString();
+
+                        double sim = Double.MIN_VALUE;
+
+                        List<String> values2 = new LinkedList<>();
+                        values2.add(value2);
+                        for (String sForm : surfaceForms.getSurfaceForms(WebTablesStringNormalizer.normaliseValue(value2, false))) {
+                            values2.add(sForm);
                         }
+
+                        for (String v2 : values2) {
+                            double s = new LevenshteinSimilarity().calculate(value1, v2);
+                            sim = Math.max(s, sim);
+                        }
+
+                        List<String> values1 = new LinkedList<>();
+                        values1.add(value1);
+                        for (String sForm : surfaceForms.getSurfaceForms(WebTablesStringNormalizer.normaliseValue(value1, false))) {
+                            values1.add(sForm);
+                        }
+
+                        for (String v1 : values1) {
+                            double s = new LevenshteinSimilarity().calculate(v1, value2);
+                            sim = Math.max(s, sim);
+                        }
+
+                        result += sim;
+                        countResult++;
                     }
                 }
+
                 result = result / countResult;
                 if (Double.isNaN(result)) {
-                    return 0.0;
+                    return Double.MIN_VALUE;
                 }
                 return result;
             }
-            return 0.0;
+            return Double.MIN_VALUE;
         }
 
         @Override
@@ -198,7 +218,7 @@ public class SFValueBasedMatching {
                         SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB,
                             new SFComparatorWebJaccard(oldToNew, tableToCorrespondenceMap, surfaceForms, kb));
                         sf.setRemoveOid(true);
-                        sf.setMinSim(0.001);
+                        sf.setMinSim(Double.MIN_VALUE);
                         sf.run();
                         correspondences.addAll(sf.getResult().get());
                     }
