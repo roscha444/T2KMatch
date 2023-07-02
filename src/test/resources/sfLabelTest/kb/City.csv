@@ -1,0 +1,6 @@
+"URI","rdf-schema#label","areaTotal","country"
+"URI","http://www.w3.org/2000/01/rdf-schema#label","http://dbpedia.org/ontology/PopulatedPlace/areaTotal","http://dbpedia.org/ontology/country"
+"URI","rdf-schema#Literal","squareKilometre","Country"
+"http://www.w3.org/2002/07/owl#Thing","http://www.w3.org/2000/01/rdf-schema#Literal","http://dbpedia.org/datatype/squareKilometre","http://dbpedia.org/ontology/Country"
+"http://dbpedia.org/resource/%60Amran","`Amran","NULL","http://dbpedia.org/resource/Yemen"
+"http://dbpedia.org/resource/%C3%81lamo,_Veracruz","Álamo Veracruz","NULL","http://dbpedia.org/resource/Mexico"
