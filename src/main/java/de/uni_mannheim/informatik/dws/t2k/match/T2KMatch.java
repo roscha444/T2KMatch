@@ -340,14 +340,6 @@ public class T2KMatch extends Executable implements Serializable {
         IdentityResolution identityResolution = new IdentityResolution(matchingEngine, web, kb, sf);
         UpdateSchemaCorrespondences updateSchema = new UpdateSchemaCorrespondences();
 
-        /***********************************************
-         * Similarity Flooding - Structure Based
-         ***********************************************/
-        MatchingLogger.printHeader("Similarity Flooding - Structure Based");
-
-        SimilarityFloodingAlgorithm similarityFloodingAlgorithm = new SimilarityFloodingAlgorithm(null, null);
-        evaluateSchemaCorrespondences(schemaCorrespondences, "similarity-flooding");
-
         int iteration = 0;
         do { // iterative matching loop
             /***********************************************
@@ -401,6 +393,24 @@ public class T2KMatch extends Executable implements Serializable {
         } while(++iteration<numIterations); // loop for iterative part
 
         /***********************************************
+         * Similarity Flooding - Structure Based
+         ***********************************************/
+        MatchingLogger.printHeader("Similarity Flooding - Structure Based");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCopy = schemaCorrespondences.copy();
+
+        HashMap<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> tableToCorr = new HashMap<>();
+
+        for(Correspondence<MatchableTableColumn, MatchableTableRow> corr : schemaCopy.get()) {
+            if(!tableToCorr.containsKey(corr.getFirstRecord().getTableId())) {
+                tableToCorr.put(corr.getFirstRecord().getTableId(), new ArrayList<>());
+            }
+            tableToCorr.get(corr.getFirstRecord().getTableId()).add(corr);
+        }
+
+        SimilarityFloodingAlgorithm similarityFloodingAlgorithm = new SimilarityFloodingAlgorithm(null, null);
+        evaluateSchemaCorrespondences(schemaCorrespondences, "similarity-flooding");
+
+        /***********************************************
          * One-to-one Matching
          ***********************************************/
         instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
@@ -432,11 +442,7 @@ public class T2KMatch extends Executable implements Serializable {
             map.put(tableId, stringCorrespondenceHashMap);
         }
 
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCopy = schemaCorrespondences.copy();
-
         schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
-
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaBiPartiteCorrespondences = matchingEngine.getMaximumWeightGlobalSchemaMatching(schemaCopy);
 
         /***********************************************
          *Table Filtering - Mapped Ratio Filter
