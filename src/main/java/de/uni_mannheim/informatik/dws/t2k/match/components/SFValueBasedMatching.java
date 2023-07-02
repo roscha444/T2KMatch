@@ -10,7 +10,9 @@
  */
 package de.uni_mannheim.informatik.dws.t2k.match.components;
 
+import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparatorBasedOnSurfaceForms;
+import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowDateComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
@@ -36,7 +38,6 @@ import de.uni_mannheim.informatik.dws.winter.similarity.numeric.DeviationSimilar
 import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
 import de.uni_mannheim.informatik.dws.winter.utils.MapUtils;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,57 +71,63 @@ public class SFValueBasedMatching {
         private ComparatorLogger comparisonLog;
         private Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> tableToCorrespondenceMap;
 
-        private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5);
-
+        private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.2, 0.2);
         private SimilarityMeasure<Double> numericSimilarity = new DeviationSimilarity();
-
         private WeightedDateSimilarity dateSimilarity = new WeightedDateSimilarity(1, 3, 5);
 
 
-        SurfaceForms sf;
-        private KnowledgeBase kb;
+        private SurfaceForms surfaceForms;
+        private final KnowledgeBase kb;
 
         public SFComparatorWebJaccard(Map<MatchableTableColumn, MatchableTableColumn> oldToNew,
-            Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> tableToCorrespondenceMap, SurfaceForms sf, KnowledgeBase kb) {
+            Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> tableToCorrespondenceMap, SurfaceForms surfaceForms, KnowledgeBase kb) {
             this.oldToNew = oldToNew;
             this.tableToCorrespondenceMap = tableToCorrespondenceMap;
-            this.sf = sf;
+            this.surfaceForms = surfaceForms;
             this.kb = kb;
         }
 
         @Override
         public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
 
-            MatchableTableRowComparatorBasedOnSurfaceForms mt = new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), 0.2, sf);
+            MatchableTableRowComparatorBasedOnSurfaceForms stringSurfaceComparator = new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), 0.2, surfaceForms);
+            MatchableTableRowComparator doubleComparator = new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), 0.2);
+            MatchableTableRowDateComparator dateComparator = new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), 0.2);
 
             MatchableTableColumn secondRecord = oldToNew.get(record2);
             if (tableToCorrespondenceMap.containsKey(record1.getTableId()) && tableToCorrespondenceMap.get(record1.getTableId()).containsKey(secondRecord.getTableId())) {
 
                 List<Correspondence<MatchableTableRow, MatchableTableColumn>> corrList = tableToCorrespondenceMap.get(record1.getTableId()).get(secondRecord.getTableId());
+
                 double result = 0.0;
                 int countResult = 0;
+
                 for (Correspondence<MatchableTableRow, MatchableTableColumn> corr : corrList) {
+
                     int columnIndexFirstTable = record1.getColumnIndex();
                     DataType firstColumnType = corr.getFirstRecord().getType(columnIndexFirstTable);
 
-                    int columnIndexSecondTable = secondRecord.getColumnIndex();
-                    DataType secondColumnType = corr.getSecondRecord().getType(columnIndexSecondTable);
+                    int columnIndexSecondTable = record2.getColumnIndex();
+                    DataType secondColumnType = corr.getSecondRecord().getType(secondRecord.getColumnIndex());
 
                     if (firstColumnType != null && secondColumnType != null) {
-                        countResult++;
                         if (firstColumnType.equals(secondColumnType)) {
+                            countResult++;
                             if (firstColumnType.equals(DataType.string)) {
-                                result += mt.compare(corr.getFirstRecord(), corr.getSecondRecord(), columnIndexFirstTable, columnIndexSecondTable);
+                                result += stringSurfaceComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), columnIndexFirstTable, columnIndexSecondTable);
                             } else if (firstColumnType.equals(DataType.numeric)) {
-                                result += numericSimilarity.calculate((Double) corr.getFirstRecord().get(columnIndexFirstTable), (Double) corr.getSecondRecord().get(columnIndexSecondTable));
+                                result += doubleComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
                             } else if (firstColumnType.equals(DataType.date)) {
-                                result += dateSimilarity.calculate((LocalDateTime) corr.getFirstRecord().get(columnIndexFirstTable),
-                                    (LocalDateTime) corr.getSecondRecord().get(columnIndexSecondTable));
+                                result += dateComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
                             }
                         }
                     }
                 }
-                return result / countResult;
+                result = result / countResult;
+                if (Double.isNaN(result)) {
+                    return 0.0;
+                }
+                return result;
             }
             return 0.0;
         }
