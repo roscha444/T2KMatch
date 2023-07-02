@@ -1,23 +1,7 @@
 package de.uni_mannheim.informatik.dws.t2k.match;
 
-import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import au.com.bytecode.opencsv.CSVWriter;
-
 import com.beust.jcommander.Parameter;
-
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparatorBasedOnSurfaceForms;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowDateComparator;
@@ -30,6 +14,7 @@ import de.uni_mannheim.informatik.dws.t2k.match.components.CombineSchemaCorrespo
 import de.uni_mannheim.informatik.dws.t2k.match.components.DuplicateBasedSchemaMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.IdentityResolution;
 import de.uni_mannheim.informatik.dws.t2k.match.components.LabelBasedSchemaMatching;
+import de.uni_mannheim.informatik.dws.t2k.match.components.SFLabelBasedMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.TableFiltering;
 import de.uni_mannheim.informatik.dws.t2k.match.components.UpdateSchemaCorrespondences;
 import de.uni_mannheim.informatik.dws.t2k.match.data.ExtractedTriple;
@@ -68,6 +53,18 @@ import de.uni_mannheim.informatik.dws.winter.utils.StringUtils;
 import de.uni_mannheim.informatik.dws.winter.utils.parallel.Parallel;
 import de.uni_mannheim.informatik.dws.winter.utils.query.Func;
 import de.uni_mannheim.informatik.dws.winter.utils.query.Q;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * 
@@ -331,8 +328,10 @@ public class T2KMatch extends Executable implements Serializable {
          *Iterative Matching
          ***********************************************/
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> labelBasedSchemaCorrespondences = null;
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfBasedSchemaCorrespondence = null;
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> lastSchemaCorrespondences = null;
 
+        SFLabelBasedMatching sfLabelBasedMatching = new SFLabelBasedMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         LabelBasedSchemaMatching labelBasedSchema = new LabelBasedSchemaMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         DuplicateBasedSchemaMatching duplicateBasedSchema = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
         CombineSchemaCorrespondences combineSchema = new CombineSchemaCorrespondences(keyCorrespondences);
@@ -349,6 +348,14 @@ public class T2KMatch extends Executable implements Serializable {
             labelBasedSchema.setInstanceCorrespondences(instanceCorrespondences);
             labelBasedSchemaCorrespondences = labelBasedSchema.run();
             evaluateSchemaCorrespondences(labelBasedSchemaCorrespondences, "label-based");
+
+            /***********************************************
+             * Similarity Flooding - Structure Based
+             ***********************************************/
+            MatchingLogger.printHeader("Similarity Flooding - Structure Based");
+            sfLabelBasedMatching.setInstanceCorrespondences(instanceCorrespondences);
+            sfBasedSchemaCorrespondence = sfLabelBasedMatching.run();
+            evaluateSchemaCorrespondences(sfBasedSchemaCorrespondence, "similarity-flooding");
 
             /***********************************************
              * Schema Matching - Duplicate Based
@@ -391,24 +398,6 @@ public class T2KMatch extends Executable implements Serializable {
 
             lastSchemaCorrespondences = schemaCorrespondences;
         } while(++iteration<numIterations); // loop for iterative part
-
-        /***********************************************
-         * Similarity Flooding - Structure Based
-         ***********************************************/
-        MatchingLogger.printHeader("Similarity Flooding - Structure Based");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCopy = schemaCorrespondences.copy();
-
-        HashMap<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> tableToCorr = new HashMap<>();
-
-        for(Correspondence<MatchableTableColumn, MatchableTableRow> corr : schemaCopy.get()) {
-            if(!tableToCorr.containsKey(corr.getFirstRecord().getTableId())) {
-                tableToCorr.put(corr.getFirstRecord().getTableId(), new ArrayList<>());
-            }
-            tableToCorr.get(corr.getFirstRecord().getTableId()).add(corr);
-        }
-
-        SimilarityFloodingAlgorithm similarityFloodingAlgorithm = new SimilarityFloodingAlgorithm(null, null);
-        evaluateSchemaCorrespondences(schemaCorrespondences, "similarity-flooding");
 
         /***********************************************
          * One-to-one Matching
