@@ -1,7 +1,7 @@
 package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value;
 
 import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.SimilarityFloodingMatching;
-import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value.kb2wb.ValueStringComparatorKB2WB;
+import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value.kb2wb.ValueTypeComparatorKB2WB;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public class SFValueBasedMatchingKB2WB extends SimilarityFloodingMatching {
 
-    private static final double MIN_SIM = 0.01;
+    private static final double MIN_SIM = 0.10;
     private static final boolean REMOVE_OID = true;
     private static final boolean USE_ALTERNATIVE_INC_FNC = true;
 
@@ -53,8 +53,8 @@ public class SFValueBasedMatchingKB2WB extends SimilarityFloodingMatching {
                         kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
 
                         SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(kbTable, webTable,
-                            new ValueStringComparatorKB2WB(originalMatchableToAdaptedMatchable, tableToCorrespondenceMap, surfaceForms, kb));
-                        sfMatcher.setRemoveOid(USE_ALTERNATIVE_INC_FNC);
+                            new ValueTypeComparatorKB2WB(originalMatchableToAdaptedMatchable, tableToCorrespondenceMap, surfaceForms, kb));
+                        sfMatcher.setAlternativeInc(USE_ALTERNATIVE_INC_FNC);
                         sfMatcher.setMinSim(MIN_SIM);
                         sfMatcher.setRemoveOid(REMOVE_OID);
                         sfMatcher.run();

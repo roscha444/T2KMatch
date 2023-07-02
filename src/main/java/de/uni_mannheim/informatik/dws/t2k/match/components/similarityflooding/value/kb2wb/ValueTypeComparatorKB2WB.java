@@ -57,7 +57,7 @@ public class ValueTypeComparatorKB2WB implements Comparator<MatchableTableColumn
 
         MatchableTableColumn first = originalMatchableToAdaptedMatchable.get(record1);
 
-        double result = Double.MIN_VALUE;
+        double result = 0.0;
         int countResult = 0;
 
         if (tableToCorrespondenceMap.containsKey(record2.getTableId()) && tableToCorrespondenceMap.get(record2.getTableId()).containsKey(first.getTableId())) {

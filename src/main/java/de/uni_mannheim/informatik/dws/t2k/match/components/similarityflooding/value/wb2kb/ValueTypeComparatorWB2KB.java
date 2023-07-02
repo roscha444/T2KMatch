@@ -57,7 +57,7 @@ public class ValueTypeComparatorWB2KB implements Comparator<MatchableTableColumn
 
         MatchableTableColumn secondRecord = originalMatchableToAdaptedMatchable.get(record2);
 
-        double result = Double.MIN_VALUE;
+        double result = 0.0;
         int countResult = 0;
 
         if (tableToCorrespondenceMap.containsKey(record1.getTableId()) && tableToCorrespondenceMap.get(record1.getTableId()).containsKey(secondRecord.getTableId())) {
@@ -77,9 +77,9 @@ public class ValueTypeComparatorWB2KB implements Comparator<MatchableTableColumn
                         if (typeFirstRecord.equals(DataType.string)) {
                             result += stringSurfaceComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), indexFirstRecord, indexSecondRecord);
                         } else if (typeFirstRecord.equals(DataType.numeric)) {
-                            result += doubleComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record2, record1);
+                            result += doubleComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
                         } else if (typeFirstRecord.equals(DataType.date)) {
-                            result += dateComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record2, record1);
+                            result += dateComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
                         }
                     }
 

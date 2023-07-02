@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public class SFLabelBasedMatchingKB2WB extends SimilarityFloodingMatching {
 
-    private static final double MIN_SIM = 0.01;
+    private static final double MIN_SIM = 0.10;
     private static final boolean REMOVE_OID = true;
     private static final boolean USE_ALTERNATIVE_INC_FNC = true;
 
@@ -43,7 +43,7 @@ public class SFLabelBasedMatchingKB2WB extends SimilarityFloodingMatching {
                     if (kbTable != null && kbTable.size() > 0) {
                         kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
 
-                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable,
+                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(kbTable, webTable,
                             new LabelComparator());
                         sfMatcher.setRemoveOid(REMOVE_OID);
                         sfMatcher.setMinSim(MIN_SIM);

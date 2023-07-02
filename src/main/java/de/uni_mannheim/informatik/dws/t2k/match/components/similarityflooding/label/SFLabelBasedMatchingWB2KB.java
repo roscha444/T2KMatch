@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public class SFLabelBasedMatchingWB2KB extends SimilarityFloodingMatching {
 
-    private static final double MIN_SIM = 0.01;
+    private static final double MIN_SIM = 0.10;
     private static final boolean REMOVE_OID = true;
     private static final boolean USE_ALTERNATIVE_INC_FNC = true;
 
