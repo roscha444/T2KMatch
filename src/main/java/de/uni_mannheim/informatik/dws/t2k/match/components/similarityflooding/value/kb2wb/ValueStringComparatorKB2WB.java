@@ -55,7 +55,10 @@ public class ValueStringComparatorKB2WB implements Comparator<MatchableTableColu
     @Override
     public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
         MatchableTableColumn firstRecord = originalMatchableToAdaptedMatchable.get(record1);
-        double maxSim = Double.MIN_VALUE;
+
+        double result = 0.0;
+        int countResult = 0;
+
         if (tableToCorrespondenceMap.containsKey(record2.getTableId()) && tableToCorrespondenceMap.get(record2.getTableId()).containsKey(firstRecord.getTableId())) {
             surfaceForms.loadIfRequired();
             for (Correspondence<MatchableTableRow, MatchableTableColumn> corr : tableToCorrespondenceMap.get(record2.getTableId()).get(firstRecord.getTableId())) {
@@ -77,11 +80,18 @@ public class ValueStringComparatorKB2WB implements Comparator<MatchableTableColu
                     double currRecordSim = Double.MIN_VALUE;
                     currRecordSim = calculateMaxSimFromSurface(valueFirstRecord, valueSecondRecord, currRecordSim);
                     currRecordSim = calculateMaxSimFromSurface(valueSecondRecord, valueFirstRecord, currRecordSim);
-                    maxSim = Math.max(maxSim, currRecordSim);
+                    result += currRecordSim;
+                    countResult++;
                 }
             }
         }
-        return maxSim;
+        result = result / countResult;
+
+        if (Double.isNaN(result)) {
+            return Double.MIN_VALUE;
+        }
+
+        return result;
     }
 
     private double calculateMaxSimFromSurface(String value1, String value2, double sim) {
