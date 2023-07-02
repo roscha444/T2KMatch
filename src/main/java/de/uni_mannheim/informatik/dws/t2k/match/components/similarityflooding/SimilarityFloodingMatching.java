@@ -1,33 +1,16 @@
-/**
- * Copyright (C) 2015 Data and Web Science Group, University of Mannheim, Germany (code@dwslab.de)
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied. See the License for the specific language governing permissions and limitations under the License.
- */
-package de.uni_mannheim.informatik.dws.t2k.match.components;
+package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
 import de.uni_mannheim.informatik.dws.t2k.match.data.WebTables;
-import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
-import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.ComparatorLogger;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
-import de.uni_mannheim.informatik.dws.winter.model.Matchable;
 import de.uni_mannheim.informatik.dws.winter.model.Pair;
 import de.uni_mannheim.informatik.dws.winter.processing.DataIterator;
 import de.uni_mannheim.informatik.dws.winter.processing.Function;
 import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 import de.uni_mannheim.informatik.dws.winter.processing.ProcessableCollection;
 import de.uni_mannheim.informatik.dws.winter.processing.RecordMapper;
-import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
-import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
-import de.uni_mannheim.informatik.dws.winter.similarity.string.TokenizingJaccardSimilarity;
 import de.uni_mannheim.informatik.dws.winter.utils.MapUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,76 +22,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Component that runs the label-based similarity flooding algorithm.
+ * Abstract class for similarity flooding matcher
  *
  * @author Robin Schumacher (info@robin-schumacher.com)
  */
-public class SFLabelBasedMatching {
+public abstract class SimilarityFloodingMatching {
 
-    public static final double MIN_SIM = 0.05;
+    protected WebTables web;
+    protected KnowledgeBase kb;
+    protected Map<Integer, Set<String>> classesPerTable;
+    protected Map<MatchableTableColumn, MatchableTableColumn> originalMatchableToAdaptedMatchable = new HashMap<>();
 
-    public static class SFComparatorWebJaccard implements Comparator<MatchableTableColumn, MatchableTableColumn> {
-
-        private static final long serialVersionUID = 1L;
-        private final GeneralisedStringJaccard similarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.2, 0.2);
-        private ComparatorLogger comparisonLog;
-        private TokenizingJaccardSimilarity similarity2 = new TokenizingJaccardSimilarity();
-        LevenshteinSimilarity comparatorLevenshtein = new LevenshteinSimilarity();
-
-
-        @Override
-        public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
-            return comparatorLevenshtein.calculate(record1.getHeader(), record2.getHeader());
-        }
-
-        @Override
-        public ComparatorLogger getComparisonLog() {
-            return this.comparisonLog;
-        }
-
-        @Override
-        public void setComparisonLog(ComparatorLogger comparatorLog) {
-            this.comparisonLog = comparatorLog;
-        }
-
-    }
-    private WebTables web;
-    private KnowledgeBase kb;
-    private Map<Integer, Set<String>> classesPerTable;
-
-    public SFLabelBasedMatching(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable) {
+    public SimilarityFloodingMatching(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable) {
         this.web = web;
         this.kb = kb;
         this.classesPerTable = classesPerTable;
     }
 
-    public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> run() throws Exception {
-        Map<Integer, List<MatchableTableColumn>> columnsPerWebTable = web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
-        Map<Integer, List<MatchableTableColumn>> columnsPerKBTable = getColumnPerDBPediaTable();
-
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> correspondences = new ProcessableCollection<>();
-
-        for (List<MatchableTableColumn> columnListWebTable : columnsPerWebTable.values()) {
-            if (columnListWebTable.size() > 0) {
-                int tableId = columnListWebTable.get(0).getTableId();
-                Set<String> dbPediaClassesForTable = classesPerTable.get(tableId);
-                for (String dbPediaClass : dbPediaClassesForTable) {
-                    List<MatchableTableColumn> columnListKB = columnsPerKBTable.get(kb.getClassIds().get(dbPediaClass));
-                    if (columnListKB != null && columnListKB.size() > 0) {
-                        columnListKB.removeIf(x -> x.getIdentifier().equals("URI"));
-                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sf = new SimilarityFloodingAlgorithm<>(columnListWebTable, columnListKB, new SFComparatorWebJaccard());
-                        sf.setRemoveOid(true);
-                        sf.setMinSim(0.01);
-                        sf.run();
-                        correspondences.addAll(sf.getResult().get());
-                    }
-                }
-            }
-        }
-        return correspondences;
-    }
-
-    private Map<Integer, List<MatchableTableColumn>> getColumnPerDBPediaTable() {
+    protected Map<Integer, List<MatchableTableColumn>> getColumnPerDBPediaTable() {
         // first invert the direct of class indices, such that we can obtain a table id given a class name
         Map<String, Integer> nameToId = MapUtils.invert(kb.getClassIndices());
 
@@ -205,11 +136,37 @@ public class SFLabelBasedMatching {
         for (Entry<Integer, List<Pair<Integer, MatchableTableColumn>>> entry : kbSchema.entrySet()) {
             List<MatchableTableColumn> tmp = new ArrayList<>();
             for (Pair<Integer, MatchableTableColumn> pair : entry.getValue()) {
-                tmp.add(pair.getSecond());
+                MatchableTableColumn oldColumn = pair.getSecond();
+                MatchableTableColumn newColumn = new MatchableTableColumn(entry.getKey(), kb.getPropertyIndices().get(entry.getKey()).get(oldColumn.getColumnIndex()), oldColumn.getHeader(),
+                    oldColumn.getType(), oldColumn.getIdentifier());
+                originalMatchableToAdaptedMatchable.put(oldColumn, newColumn);
+                tmp.add(oldColumn);
             }
             result.put(entry.getKey(), tmp);
         }
 
         return result;
+    }
+
+    protected Map<Integer, List<MatchableTableColumn>> getColumnPerWBTable() {
+        return web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
+    }
+
+    protected Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> getTableToCorrespondenceMap(
+        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> tableToCorrespondenceMap = new HashMap<>();
+
+        for (Correspondence<MatchableTableRow, MatchableTableColumn> corr : instanceCorrespondences.get()) {
+            int firstTableId = corr.getFirstRecord().getTableId();
+            if (!tableToCorrespondenceMap.containsKey(firstTableId)) {
+                tableToCorrespondenceMap.put(firstTableId, new HashMap<>());
+            }
+            int secondTableId = corr.getSecondRecord().getTableId();
+            if (!tableToCorrespondenceMap.get(firstTableId).containsKey(secondTableId)) {
+                tableToCorrespondenceMap.get(firstTableId).put(secondTableId, new ArrayList<>());
+            }
+            tableToCorrespondenceMap.get(firstTableId).get(secondTableId).add(corr);
+        }
+        return tableToCorrespondenceMap;
     }
 }
