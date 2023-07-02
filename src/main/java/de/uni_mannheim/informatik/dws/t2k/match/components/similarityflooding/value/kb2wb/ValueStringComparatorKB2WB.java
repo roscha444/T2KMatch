@@ -68,7 +68,7 @@ public class ValueStringComparatorKB2WB implements Comparator<MatchableTableColu
 
                 if (typeFirstRecord != null && typeSecondRecord != null) {
 
-                    Map<Integer, Integer> indexTranslation = kb.getPropertyIndices().get(firstRecord.getColumnIndex());
+                    Map<Integer, Integer> indexTranslation = kb.getPropertyIndices().get(firstRecord.getTableId());
                     Integer translatedIndex = indexTranslation.get(indexFirstRecord);
 
                     String valueFirstRecord = corr.getFirstRecord().get(indexSecondRecord).toString();
