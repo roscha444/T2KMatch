@@ -1,4 +1,4 @@
-package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value.wb2kb;
+package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.value.wb2kb;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
