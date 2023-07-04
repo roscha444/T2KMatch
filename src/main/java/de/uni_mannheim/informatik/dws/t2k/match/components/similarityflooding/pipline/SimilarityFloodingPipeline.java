@@ -13,7 +13,6 @@ import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 import de.uni_mannheim.informatik.dws.winter.processing.ProcessableCollection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
@@ -40,23 +39,24 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
 
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> resultCorrespondences = new ProcessableCollection<>();
 
-        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> firstTable : schemaCorrespondenceMatrix.entrySet()) {
-            int firstTableId = firstTable.getKey();
+        for (List<MatchableTableColumn> webTable : columnsPerWebTable.values()) {
+            if (webTable.size() > 0) {
+                int tableId = webTable.get(0).getTableId();
+                Set<String> dbPediaClassesForTable = classesPerTable.get(tableId);
+                for (String dbPediaClass : dbPediaClassesForTable) {
+                    List<MatchableTableColumn> kbTable = columnsPerKBTable.get(kb.getClassIds().get(dbPediaClass));
+                    if (kbTable != null && kbTable.size() > 0) {
 
-            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> secondTable : firstTable.getValue().entrySet()) {
-                int secondTableId = secondTable.getKey();
+                        kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
 
-                List<MatchableTableColumn> webTable = columnsPerWebTable.get(firstTableId);
-                List<MatchableTableColumn> kbTable = columnsPerKBTable.get(secondTableId);
+                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable, comparator, fixpointFormula);
+                        sfMatcher.setMinSim(minSim);
+                        sfMatcher.setRemoveOid(true);
+                        sfMatcher.run();
 
-                kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
-                SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable, comparator, fixpointFormula);
-                sfMatcher.setMinSim(minSim);
-                sfMatcher.setRemoveOid(true);
-                sfMatcher.run();
-
-                resultCorrespondences.addAll(sfMatcher.getResult().get());
-
+                        resultCorrespondences.addAll(sfMatcher.getResult().get());
+                    }
+                }
             }
         }
         return resultCorrespondences;

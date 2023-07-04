@@ -16,7 +16,6 @@ import de.uni_mannheim.informatik.dws.t2k.match.components.IdentityResolution;
 import de.uni_mannheim.informatik.dws.t2k.match.components.LabelBasedSchemaMatching;
 import de.uni_mannheim.informatik.dws.t2k.match.components.TableFiltering;
 import de.uni_mannheim.informatik.dws.t2k.match.components.UpdateSchemaCorrespondences;
-import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.CombineSFSchemaCorrespondences;
 import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.pipline.SimilarityFloodingPipeline;
 import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.pipline.SimilarityFloodingPipelineComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.data.ExtractedTriple;
@@ -336,7 +335,6 @@ public class T2KMatch extends Executable implements Serializable {
         LabelBasedSchemaMatching labelBasedSchema = new LabelBasedSchemaMatching(matchingEngine, web, kb, classesPerTable, instanceCorrespondences);
         DuplicateBasedSchemaMatching duplicateBasedSchema = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
         CombineSchemaCorrespondences combineSchema = new CombineSchemaCorrespondences(keyCorrespondences);
-        CombineSFSchemaCorrespondences combineSFSchemaCorrespondences = new CombineSFSchemaCorrespondences(keyCorrespondences);
         IdentityResolution identityResolution = new IdentityResolution(matchingEngine, web, kb, sf);
         UpdateSchemaCorrespondences updateSchema = new UpdateSchemaCorrespondences();
 
@@ -395,8 +393,6 @@ public class T2KMatch extends Executable implements Serializable {
         /***********************************************
          * One-to-one Matching
          ***********************************************/
-        instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
-        schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
 
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences);
         SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
@@ -429,6 +425,8 @@ public class T2KMatch extends Executable implements Serializable {
         SimilarityFloodingPipeline sfC002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.C, comparator);
         SimilarityFloodingPipeline sfC001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.C, comparator);
 
+        instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
+        schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
         /***********************************************
          *Table Filtering - Mapped Ratio Filter
          ***********************************************/
