@@ -31,6 +31,7 @@ import de.uni_mannheim.informatik.dws.winter.index.io.DefaultIndex;
 import de.uni_mannheim.informatik.dws.winter.index.io.InMemoryIndex;
 import de.uni_mannheim.informatik.dws.winter.matching.MatchingEngine;
 import de.uni_mannheim.informatik.dws.winter.matching.MatchingEvaluator;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.Filter;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.FixpointFormula;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.MatchingGoldStandard;
@@ -410,9 +411,31 @@ public class T2KMatch extends Executable implements Serializable {
 
         SimilarityFloodingPipeline sfA010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.A, comparator);
         SimilarityFloodingPipeline sfA008 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.08, FixpointFormula.A, comparator);
+
         SimilarityFloodingPipeline sfA006 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
+
+        SimilarityFloodingPipeline sfA006TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
+        sfA006TopK.setFilter(Filter.TopOneK);
+
+        SimilarityFloodingPipeline sfA006HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
+        sfA006HG.setFilter(Filter.HungarianAlgorithm);
+
         SimilarityFloodingPipeline sfA004 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
+
+        SimilarityFloodingPipeline sfA004TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
+        sfA004TopK.setFilter(Filter.TopOneK);
+
+        SimilarityFloodingPipeline sfA004HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
+        sfA004HG.setFilter(Filter.HungarianAlgorithm);
+
         SimilarityFloodingPipeline sfA002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
+
+        SimilarityFloodingPipeline sfA002TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
+        sfA002TopK.setFilter(Filter.TopOneK);
+
+        SimilarityFloodingPipeline sfA002HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
+        sfA002HG.setFilter(Filter.HungarianAlgorithm);
+
         SimilarityFloodingPipeline sfA001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.A, comparator);
 
         SimilarityFloodingPipeline sfB010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.B, comparator);
@@ -491,16 +514,58 @@ public class T2KMatch extends Executable implements Serializable {
         //evaluateSchemaCorrespondences(sfA008.run(), "sfA008");
 
         System.out.println("==================================================");
-        System.out.println("T2K - sfA006 -  OUTPUT");
+        System.out.println("T2K - sfA006 - ST - OUTPUT");
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006Corr = sfA006.run();
         evaluateSchemaCorrespondences(sfA006Corr, "sfA006");
         printStatistics(classesPerTable, sfA006Corr);
         System.out.println("==================================================");
 
-        System.out.println("T2K - sfA004 -  OUTPUT");
+        System.out.println("T2K - sfA006 - TOP K -  OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006CorrTopK = sfA006TopK.run();
+        evaluateSchemaCorrespondences(sfA006CorrTopK, "sfA006 TOP K");
+        printStatistics(classesPerTable, sfA006CorrTopK);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA006 - HG - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006CorrHG = sfA006HG.run();
+        evaluateSchemaCorrespondences(sfA006CorrHG, "sfA006 HG");
+        printStatistics(classesPerTable, sfA006CorrHG);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA004 - ST - OUTPUT");
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004Corr = sfA004.run();
         evaluateSchemaCorrespondences(sfA004Corr, "sfA004");
         printStatistics(classesPerTable, sfA004Corr);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA004 - TOP K - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004CorrTopK = sfA004TopK.run();
+        evaluateSchemaCorrespondences(sfA004CorrTopK, "sfA004 TOP K");
+        printStatistics(classesPerTable, sfA004CorrTopK);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA004 - HG - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004CorrHG = sfA004HG.run();
+        evaluateSchemaCorrespondences(sfA004CorrHG, "sfA004 HG");
+        printStatistics(classesPerTable, sfA004CorrHG);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA002 - ST - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002Corr = sfA002.run();
+        evaluateSchemaCorrespondences(sfA002Corr, "sfA002");
+        printStatistics(classesPerTable, sfA002Corr);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA002 - TOP K - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002CorrTopK = sfA002TopK.run();
+        evaluateSchemaCorrespondences(sfA002CorrTopK, "sfA002 TOP K");
+        printStatistics(classesPerTable, sfA002CorrTopK);
+        System.out.println("==================================================");
+
+        System.out.println("T2K - sfA002 - HG - OUTPUT");
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002CorrHG = sfA002HG.run();
+        evaluateSchemaCorrespondences(sfA002CorrHG, "sfA002 HG");
+        printStatistics(classesPerTable, sfA002CorrHG);
         System.out.println("==================================================");
 
         //evaluateSchemaCorrespondences(sfA002.run(), "sfA002");

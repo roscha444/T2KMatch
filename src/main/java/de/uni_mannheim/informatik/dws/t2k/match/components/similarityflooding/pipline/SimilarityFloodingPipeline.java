@@ -6,6 +6,7 @@ import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;
 import de.uni_mannheim.informatik.dws.t2k.match.data.WebTables;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.SimilarityFloodingAlgorithm;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.Filter;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.FixpointFormula;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
@@ -21,6 +22,7 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
     private Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix;
     private double minSim;
     private FixpointFormula fixpointFormula;
+    private Filter filter = Filter.StableMarriage;
 
     public SimilarityFloodingPipeline(WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable,
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix,
@@ -50,6 +52,7 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
                         kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
 
                         SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable, comparator, fixpointFormula);
+                        sfMatcher.setFilter(filter);
                         sfMatcher.setMinSim(minSim);
                         sfMatcher.setRemoveOid(true);
                         sfMatcher.run();
@@ -62,4 +65,7 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
         return resultCorrespondences;
     }
 
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+    }
 }
