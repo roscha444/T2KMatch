@@ -400,58 +400,6 @@ public class T2KMatch extends Executable implements Serializable {
          ***********************************************/
 
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences);
-        SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
-
-        SimilarityFloodingPipeline sfBasic010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.Basic, comparator);
-        SimilarityFloodingPipeline sfBasic008 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.08, FixpointFormula.Basic, comparator);
-        SimilarityFloodingPipeline sfBasic006 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.Basic, comparator);
-        SimilarityFloodingPipeline sfBasic004 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.Basic, comparator);
-        SimilarityFloodingPipeline sfBasic002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.Basic, comparator);
-        SimilarityFloodingPipeline sfBasic001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.Basic, comparator);
-
-        SimilarityFloodingPipeline sfA010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.A, comparator);
-        SimilarityFloodingPipeline sfA008 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.08, FixpointFormula.A, comparator);
-
-        SimilarityFloodingPipeline sfA006 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
-
-        SimilarityFloodingPipeline sfA006TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
-        sfA006TopK.setFilter(Filter.TopOneK);
-
-        SimilarityFloodingPipeline sfA006HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.A, comparator);
-        sfA006HG.setFilter(Filter.HungarianAlgorithm);
-
-        SimilarityFloodingPipeline sfA004 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
-
-        SimilarityFloodingPipeline sfA004TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
-        sfA004TopK.setFilter(Filter.TopOneK);
-
-        SimilarityFloodingPipeline sfA004HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.A, comparator);
-        sfA004HG.setFilter(Filter.HungarianAlgorithm);
-
-        SimilarityFloodingPipeline sfA002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
-
-        SimilarityFloodingPipeline sfA002TopK = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
-        sfA002TopK.setFilter(Filter.TopOneK);
-
-        SimilarityFloodingPipeline sfA002HG = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.A, comparator);
-        sfA002HG.setFilter(Filter.HungarianAlgorithm);
-
-        SimilarityFloodingPipeline sfA001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.A, comparator);
-
-        SimilarityFloodingPipeline sfB010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.B, comparator);
-        SimilarityFloodingPipeline sfB008 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.08, FixpointFormula.B, comparator);
-        SimilarityFloodingPipeline sfB006 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.B, comparator);
-        SimilarityFloodingPipeline sfB004 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.B, comparator);
-        SimilarityFloodingPipeline sfB002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.B, comparator);
-        SimilarityFloodingPipeline sfB001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.B, comparator);
-
-        SimilarityFloodingPipeline sfC010 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.10, FixpointFormula.C, comparator);
-        SimilarityFloodingPipeline sfC008 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.08, FixpointFormula.C, comparator);
-        SimilarityFloodingPipeline sfC006 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.06, FixpointFormula.C, comparator);
-        SimilarityFloodingPipeline sfC004 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.04, FixpointFormula.C, comparator);
-        SimilarityFloodingPipeline sfC002 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.02, FixpointFormula.C, comparator);
-        SimilarityFloodingPipeline sfC001 = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, 0.01, FixpointFormula.C, comparator);
-
         instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondencesTopK = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
         /***********************************************
@@ -470,122 +418,50 @@ public class T2KMatch extends Executable implements Serializable {
          * Evaluation
          ***********************************************/
         System.out.println("==================================================");
-        System.out.println("META INFORMATIONEN");
 
-        int tmp = 0;
-        for (Entry<Integer, List<MatchableTableColumn>> entry : getColumnPerDBPediaTable(classesPerTable).entrySet()) {
-            tmp += entry.getValue().size();
-        }
-        int averageKnowledgeHeaderLength = tmp / getColumnPerDBPediaTable(classesPerTable).size();
-
-        tmp = 0;
-        Map<Integer, List<MatchableTableColumn>> webTableTmp = web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
-        for (Entry<Integer, List<MatchableTableColumn>> entry : webTableTmp.entrySet()) {
-            tmp += entry.getValue().size();
-        }
-        int averageWebTableHeaderLength = tmp / webTableTmp.size();
-
-        int averageMatrixSize = calcAverageMatrix(classesPerTable, schemaCorrespondences.get().stream().collect(Collectors.groupingBy(x -> x.getFirstRecord().getTableId())));
-
-        System.out.println("Avg KBTabellen Attribut Größe " + averageKnowledgeHeaderLength);
-        System.out.println("Avg WebTabellen Attribut Größe " + averageWebTableHeaderLength);
-        System.out.println("Avg Matrix Größe " + averageMatrixSize);
+        printMetaInformationen(classesPerTable, schemaCorrespondences);
 
         System.out.println("==================================================");
 
-        System.out.println("T2K OUTPUT");
+        System.out.println("T2K - Vanilla");
         printStatistics(classesPerTable, schemaCorrespondences);
+
         System.out.println("==================================================");
 
-        System.out.println("T2K - TOPK -  OUTPUT");
+        System.out.println("T2K - TOPK");
         printStatistics(classesPerTable, schemaCorrespondencesTopK);
+
         System.out.println("==================================================");
+
         evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "");
-        System.out.println("==================================================");
-
-        //evaluateSchemaCorrespondences(sfBasic010.run(), "sfBasic010");
-        //evaluateSchemaCorrespondences(sfBasic008.run(), "sfBasic008");
-        //evaluateSchemaCorrespondences(sfBasic006.run(), "sfBasic006");
-        //evaluateSchemaCorrespondences(sfBasic004.run(), "sfBasic004");
-        //evaluateSchemaCorrespondences(sfBasic002.run(), "sfBasic002");
-        //evaluateSchemaCorrespondences(sfBasic001.run(), "sfBasic001");
-
-        //evaluateSchemaCorrespondences(sfA010.run(), "sfA010");
-        //evaluateSchemaCorrespondences(sfA008.run(), "sfA008");
 
         System.out.println("==================================================");
-        System.out.println("T2K - sfA006 - ST - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006Corr = sfA006.run();
-        evaluateSchemaCorrespondences(sfA006Corr, "sfA006");
-        printStatistics(classesPerTable, sfA006Corr);
-        System.out.println("==================================================");
 
-        System.out.println("T2K - sfA006 - TOP K -  OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006CorrTopK = sfA006TopK.run();
-        evaluateSchemaCorrespondences(sfA006CorrTopK, "sfA006 TOP K");
-        printStatistics(classesPerTable, sfA006CorrTopK);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA006 - HG - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA006CorrHG = sfA006HG.run();
-        evaluateSchemaCorrespondences(sfA006CorrHG, "sfA006 HG");
-        printStatistics(classesPerTable, sfA006CorrHG);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA004 - ST - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004Corr = sfA004.run();
-        evaluateSchemaCorrespondences(sfA004Corr, "sfA004");
-        printStatistics(classesPerTable, sfA004Corr);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA004 - TOP K - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004CorrTopK = sfA004TopK.run();
-        evaluateSchemaCorrespondences(sfA004CorrTopK, "sfA004 TOP K");
-        printStatistics(classesPerTable, sfA004CorrTopK);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA004 - HG - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA004CorrHG = sfA004HG.run();
-        evaluateSchemaCorrespondences(sfA004CorrHG, "sfA004 HG");
-        printStatistics(classesPerTable, sfA004CorrHG);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA002 - ST - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002Corr = sfA002.run();
-        evaluateSchemaCorrespondences(sfA002Corr, "sfA002");
-        printStatistics(classesPerTable, sfA002Corr);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA002 - TOP K - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002CorrTopK = sfA002TopK.run();
-        evaluateSchemaCorrespondences(sfA002CorrTopK, "sfA002 TOP K");
-        printStatistics(classesPerTable, sfA002CorrTopK);
-        System.out.println("==================================================");
-
-        System.out.println("T2K - sfA002 - HG - OUTPUT");
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> sfA002CorrHG = sfA002HG.run();
-        evaluateSchemaCorrespondences(sfA002CorrHG, "sfA002 HG");
-        printStatistics(classesPerTable, sfA002CorrHG);
-        System.out.println("==================================================");
-
-        //evaluateSchemaCorrespondences(sfA002.run(), "sfA002");
-        //evaluateSchemaCorrespondences(sfA001.run(), "sfA001");
-
-        //evaluateSchemaCorrespondences(sfB010.run(), "sfB010");
-        //evaluateSchemaCorrespondences(sfB008.run(), "sfB008");
-        //evaluateSchemaCorrespondences(sfB006.run(), "sfB006");
-        //evaluateSchemaCorrespondences(sfB004.run(), "sfB004");
-        //evaluateSchemaCorrespondences(sfB002.run(), "sfB002");
-        //evaluateSchemaCorrespondences(sfB001.run(), "sfB001");
-
-        //evaluateSchemaCorrespondences(sfC010.run(), "sfC010");
-        //evaluateSchemaCorrespondences(sfC008.run(), "sfC008");
-        //evaluateSchemaCorrespondences(sfC006.run(), "sfC006");
-        //evaluateSchemaCorrespondences(sfC004.run(), "sfC004");
-        //evaluateSchemaCorrespondences(sfC002.run(), "sfC002");
-        //evaluateSchemaCorrespondences(sfC001.run(), "sfC001");
+        SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
 
         System.out.println("==================================================");
+
+        double minSim006 = 0.06;
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+
+        System.out.println("==================================================");
+
+        double minSim004 = 0.04;
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+
+        System.out.println("==================================================");
+
+        double minSim002 = 0.02;
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+
+        System.out.println("==================================================");
+
         evaluateInstanceCorrespondences(instanceCorrespondences, "");
         evaluateClassCorrespondences(createClassCorrespondence(finalClassPerTable), "");
 
@@ -614,6 +490,46 @@ public class T2KMatch extends Executable implements Serializable {
         ExtractedTriple.writeCSV(new File(results, "extracted_triples.csv"), triples.get());
 
         //TODO add the correspondences to the tables and write them to the disk
+    }
+
+    private void printMetaInformationen(Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
+        System.out.println("META INFORMATIONEN");
+
+        int tmp = 0;
+        for (Entry<Integer, List<MatchableTableColumn>> entry : getColumnPerDBPediaTable(classesPerTable).entrySet()) {
+            tmp += entry.getValue().size();
+        }
+        int averageKnowledgeHeaderLength = tmp / getColumnPerDBPediaTable(classesPerTable).size();
+
+        tmp = 0;
+        Map<Integer, List<MatchableTableColumn>> webTableTmp = web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
+        for (Entry<Integer, List<MatchableTableColumn>> entry : webTableTmp.entrySet()) {
+            tmp += entry.getValue().size();
+        }
+        int averageWebTableHeaderLength = tmp / webTableTmp.size();
+
+        int averageMatrixSize = calcAverageMatrix(classesPerTable, schemaCorrespondences.get().stream().collect(Collectors.groupingBy(x -> x.getFirstRecord().getTableId())));
+
+        System.out.println("Avg KBTabellen Attribut Größe " + averageKnowledgeHeaderLength);
+        System.out.println("Avg WebTabellen Attribut Größe " + averageWebTableHeaderLength);
+        System.out.println("Avg Matrix Größe " + averageMatrixSize);
+    }
+
+    private void executeSimFlooding(FixpointFormula formula, Double minSim, Filter filter, Map<Integer, Set<String>> classesPerTable,
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix,
+        SimilarityFloodingPipelineComparator comparator) throws Exception {
+        String runId = "SF " + formula.toString() + " " + minSim.toString() + " " + filter.toString();
+        System.out.println(runId);
+        SimilarityFloodingPipeline simFlooding = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, minSim, formula, comparator);
+        simFlooding.setFilter(filter);
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> simFloodingResult = simFlooding.run();
+        System.out.println("");
+        System.out.println("Statistics after SF");
+        simFlooding.getMatrixStatistics();
+        evaluateSchemaCorrespondences(simFloodingResult, runId);
+        System.out.println("");
+        System.out.println("Statistics after " + filter.toString());
+        printStatistics(classesPerTable, simFloodingResult);
     }
 
     private void printStatistics(Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
