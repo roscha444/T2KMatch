@@ -314,7 +314,7 @@ public class T2KMatch extends Executable implements Serializable {
         schemaMatchingForClassRefinement.setFinalPropertySimilarityThreshold(0.03);
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences = schemaMatchingForClassRefinement.run();
         // add key correspondences (some tables only have key correspondences)
-        evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based (refinement)");
+        evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based (refinement)", null);
         schemaCorrespondences = schemaCorrespondences.append(keyCorrespondences);
         // determine most probable class mapping
         ClassRefinement classRefinement = new ClassRefinement(kb.getPropertyIndices(), KnowledgeBase.getClassHierarchy(),schemaCorrespondences,classesPerTable, kb.getClassIds());
@@ -352,7 +352,7 @@ public class T2KMatch extends Executable implements Serializable {
             MatchingLogger.printHeader("Schema Matching - Label Based");
             labelBasedSchema.setInstanceCorrespondences(instanceCorrespondences);
             labelBasedSchemaCorrespondences = labelBasedSchema.run();
-            evaluateSchemaCorrespondences(labelBasedSchemaCorrespondences, "label-based");
+            evaluateSchemaCorrespondences(labelBasedSchemaCorrespondences, "label-based", null);
 
             /***********************************************
              * Schema Matching - Duplicate Based
@@ -360,7 +360,7 @@ public class T2KMatch extends Executable implements Serializable {
             MatchingLogger.printHeader("Schema Matching - Duplicate Based");
             duplicateBasedSchema.setInstanceCorrespondences(instanceCorrespondences);
             schemaCorrespondences = duplicateBasedSchema.run();
-            evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based");
+            evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based", null);
 
             /***********************************************
              * Combine Schema Correspondences
@@ -369,7 +369,7 @@ public class T2KMatch extends Executable implements Serializable {
             combineSchema.setSchemaCorrespondences(schemaCorrespondences);
             combineSchema.setLabelBasedSchemaCorrespondences(labelBasedSchemaCorrespondences);
             schemaCorrespondences = combineSchema.run();
-            evaluateSchemaCorrespondences(schemaCorrespondences, "combined");
+            evaluateSchemaCorrespondences(schemaCorrespondences, "combined", null);
 
             /***********************************************
              * Iterative - Update Schema Correspondences
@@ -378,7 +378,7 @@ public class T2KMatch extends Executable implements Serializable {
                 updateSchema.setSchemaCorrespondences(lastSchemaCorrespondences);
                 updateSchema.setNewSchemaCorrespondences(schemaCorrespondences);
                 schemaCorrespondences = updateSchema.run();
-                evaluateSchemaCorrespondences(schemaCorrespondences, "updated");
+                evaluateSchemaCorrespondences(schemaCorrespondences, "updated", null);
             }
 
             /***********************************************
@@ -418,10 +418,15 @@ public class T2KMatch extends Executable implements Serializable {
         /***********************************************
          * Evaluation
          ***********************************************/
+
+        CSVWriter evaluationWriter = new CSVWriter(new FileWriter(new File(results, "evaluation.csv")), ';');
+        evaluationWriter.writeNext(new String[]{"ID", "Count", "Precision", "Recall", "F1", "Recall@GT", "NPB C", "BP C", "NBP R", "BP R"});
+        CSVWriter matrixWriter = new CSVWriter(new FileWriter(new File(results, "matrix.csv")), ';');
+
         System.out.println("==================================================");
 
         System.out.println("T2K - Vanilla");
-        printStatistics(finalClassPerTable, schemaCorrespondences);
+        printStatistics("T2K Vanilla", finalClassPerTable, schemaCorrespondences, matrixWriter);
         System.out.println();
         printMetaInformation(classesPerTable, getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable));
 
@@ -429,38 +434,41 @@ public class T2KMatch extends Executable implements Serializable {
 
         System.out.println("T2K - TOPK");
         System.out.println();
-        printStatistics(finalClassPerTable, schemaCorrespondencesTopK);
-        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "");
+        printStatistics("T2K TOPK", finalClassPerTable, schemaCorrespondencesTopK, matrixWriter);
+        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "T2K TOPK", evaluationWriter);
 
         System.out.println("==================================================");
         System.out.println("T2K - TOPK - VALIDIERUNG");
         List<Correspondence<MatchableTableColumn, MatchableTableRow>> result = ownTopOneForValidation(schemaCorrespondences, finalClassPerTable);
-        evaluateSchemaCorrespondences(new ProcessableCollection<>(result), "own top k");
+        evaluateSchemaCorrespondences(new ProcessableCollection<>(result), "own top k", evaluationWriter);
 
         SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
 
         System.out.println("==================================================");
 
         double minSim006 = 0.06;
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
 
         double minSim004 = 0.04;
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
 
         double minSim002 = 0.02;
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
+
+        evaluationWriter.close();
+        matrixWriter.close();
 
         evaluateInstanceCorrespondences(instanceCorrespondences, "");
         evaluateClassCorrespondences(createClassCorrespondence(finalClassPerTable), "");
@@ -672,7 +680,7 @@ public class T2KMatch extends Executable implements Serializable {
 
     private void executeSimFlooding(FixpointFormula formula, Double minSim, Filter filter, Map<Integer, Set<String>> classesPerTable, Map<Integer, String> finalClassPerTable,
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix,
-        SimilarityFloodingPipelineComparator comparator) throws Exception {
+        SimilarityFloodingPipelineComparator comparator, CSVWriter evaluationWriter, CSVWriter matrixWriter) throws Exception {
 
         String runId = "SF " + formula.toString() + " " + minSim.toString() + " " + filter.toString();
         System.out.println(runId);
@@ -685,15 +693,16 @@ public class T2KMatch extends Executable implements Serializable {
 
         System.out.println("Statistics after SF");
         simFlooding.getMatrixStatistics();
-        evaluateSchemaCorrespondences(simFloodingResult, runId);
+        evaluateSchemaCorrespondences(simFloodingResult, runId, evaluationWriter);
 
         System.out.println();
 
         System.out.println("Statistics after " + filter.toString());
-        printStatistics(finalClassPerTable, simFloodingResult);
+        printStatistics(runId, finalClassPerTable, simFloodingResult, matrixWriter);
     }
 
-    private void printStatistics(Map<Integer, String> finalClassPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
+    private void printStatistics(String runId, Map<Integer, String> finalClassPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences,
+        CSVWriter matrixWriter) {
 
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable);
 
@@ -718,6 +727,11 @@ public class T2KMatch extends Executable implements Serializable {
         System.out.println("Min Felder in Matrix " + minFields);
         System.out.println("Avg Felder in Matrix " + avgFieldsInMatrix);
         System.out.println();
+
+        if (matrixWriter != null) {
+            matrixWriter.writeNext(
+                new String[]{runId, String.valueOf(schemaCorrespondences.size()), String.valueOf(maxFields), String.valueOf(minFields), String.valueOf(avgFieldsInMatrix)});
+        }
     }
 
     private Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> getSchemaCorrespondenceMatrix(
@@ -797,16 +811,16 @@ public class T2KMatch extends Executable implements Serializable {
             instancePerf = instanceEvaluator.evaluateMatching(instanceCorrespondencesCollection, instanceGs);
         }
 
-        if(instancePerf!=null) {
+        if (instancePerf != null) {
             System.out
                 .printf(
-                "Instance Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
+                    "Instance Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
                     instancePerf.getPrecision(), instancePerf.getRecall(),
                     instancePerf.getF1());
         }
     }
-    
-    protected void evaluateSchemaCorrespondences(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences, String name) {
+
+    protected void evaluateSchemaCorrespondences(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences, String name, CSVWriter evaluationWriter) {
         Performance schemaPerf = null;
         double recallAtGT = 0.0;
         double NBPRow = 0.0;
@@ -838,7 +852,15 @@ public class T2KMatch extends Executable implements Serializable {
                     "\tnon binary Precision (row): %.4f\n" +
                     "\tbinary Precision (row):: %.4f\n\n",
                 schemaPerf.getPrecision(), schemaPerf.getRecall(), schemaPerf.getF1(), recallAtGT, NBPCol, BPCol, NBPRow, BPRow);
+            if (evaluationWriter != null) {
+                evaluationWriter.writeNext(
+                    new String[]{name, String.valueOf(schemaCorrespondences.get().size()), String.valueOf(schemaPerf.getPrecision()), String.valueOf(schemaPerf.getRecall()),
+                        String.valueOf(schemaPerf.getF1()),
+                        String.valueOf(recallAtGT), String.valueOf(NBPCol), String.valueOf(BPCol), String.valueOf(NBPRow), String.valueOf(BPRow)});
+            }
         }
+
+
     }
     
     protected void evaluateClassCorrespondences(Processable<Correspondence<MatchableTable, MatchableTableColumn>> classCorrespondences, String name) {
