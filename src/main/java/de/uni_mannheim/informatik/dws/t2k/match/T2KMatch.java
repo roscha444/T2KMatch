@@ -33,6 +33,13 @@ import de.uni_mannheim.informatik.dws.winter.matching.MatchingEngine;
 import de.uni_mannheim.informatik.dws.winter.matching.MatchingEvaluator;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.Filter;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.FixpointFormula;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.filter.HungarianAlgorithm;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.filter.StableMarriage;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.ipg.CoeffEdge;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.ipg.IPGNode;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.pcg.PairwiseConnectivityNode;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.pcg.SFNode;
+import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.pcg.SFNodeType;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.model.MatchingGoldStandard;
 import de.uni_mannheim.informatik.dws.winter.model.Pair;
@@ -73,6 +80,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jgrapht.graph.SimpleDirectedGraph;
 
 /**
  * 
@@ -311,7 +319,7 @@ public class T2KMatch extends Executable implements Serializable {
         MatchingLogger.printHeader("Property-based Class Refinement");
         // match properties
         DuplicateBasedSchemaMatching schemaMatchingForClassRefinement = new DuplicateBasedSchemaMatching(matchingEngine, web, kb, sf, classesPerTable, instanceCorrespondences, false);
-        schemaMatchingForClassRefinement.setFinalPropertySimilarityThreshold(0.03);
+        schemaMatchingForClassRefinement.setFinalPropertySimilarityThreshold(0.02);
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences = schemaMatchingForClassRefinement.run();
         // add key correspondences (some tables only have key correspondences)
         evaluateSchemaCorrespondences(schemaCorrespondences, "duplicate-based (refinement)", null);
@@ -422,6 +430,7 @@ public class T2KMatch extends Executable implements Serializable {
         CSVWriter evaluationWriter = new CSVWriter(new FileWriter(new File(results, "evaluation.csv")), ';');
         evaluationWriter.writeNext(new String[]{"ID", "Count", "Precision", "Recall", "F1", "Recall@GT", "NPB C", "BP C", "NBP R", "BP R"});
         CSVWriter matrixWriter = new CSVWriter(new FileWriter(new File(results, "matrix.csv")), ';');
+        SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
 
         System.out.println("==================================================");
 
@@ -429,20 +438,33 @@ public class T2KMatch extends Executable implements Serializable {
         printStatistics("T2K Vanilla", finalClassPerTable, schemaCorrespondences, matrixWriter);
         System.out.println();
         printMetaInformation(classesPerTable, getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable));
+        evaluateSchemaCorrespondences(schemaCorrespondences, "T2K Vanilla", evaluationWriter);
 
         System.out.println("==================================================");
 
-        System.out.println("T2K - TOPK");
+        // Stable Marriage
+        ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> stableMarriageResult = stableMarriage(schemaCorrespondences, finalClassPerTable);
+        evaluateSchemaCorrespondences(stableMarriageResult, "T2K StableMarriage", evaluationWriter);
+
+        // Top One
+        List<Correspondence<MatchableTableColumn, MatchableTableRow>> topOneResult = topOne(schemaCorrespondences, finalClassPerTable);
+        evaluateSchemaCorrespondences(new ProcessableCollection<>(topOneResult), "T2K TopOne", evaluationWriter);
+
+        // Hungarian Algorithm
+        ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> hungarianAlgorithmResult = hungarianAlgorithm(schemaCorrespondences, finalClassPerTable);
+        evaluateSchemaCorrespondences(hungarianAlgorithmResult, "T2K HungarianAlgorithm", evaluationWriter);
+
+        // MaximumBipartiteMatchingAlgorithm<MatchableTableColumn, MatchableTableRow> maximumBipartiteMatchingAlgorithm = new MaximumBipartiteMatchingAlgorithm<>(schemaCorrespondences.copy());
+        // maximumBipartiteMatchingAlgorithm.setGroupByLeftDataSource(true);
+        // maximumBipartiteMatchingAlgorithm.run();
+        // evaluateSchemaCorrespondences(maximumBipartiteMatchingAlgorithm.getResult(), "T2K MaximumBipartiteMatchingAlgorithm", evaluationWriter);
+
+        System.out.println("==================================================");
+
+        System.out.println("T2K - TOPK - ORIGINAL");
         System.out.println();
-        printStatistics("T2K TOPK", finalClassPerTable, schemaCorrespondencesTopK, matrixWriter);
-        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "T2K TOPK", evaluationWriter);
-
-        System.out.println("==================================================");
-        System.out.println("T2K - TOPK - VALIDIERUNG");
-        List<Correspondence<MatchableTableColumn, MatchableTableRow>> result = ownTopOneForValidation(schemaCorrespondences, finalClassPerTable);
-        evaluateSchemaCorrespondences(new ProcessableCollection<>(result), "own top k", evaluationWriter);
-
-        SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
+        printStatistics("T2K TOPK - ORIGINAL", finalClassPerTable, schemaCorrespondencesTopK, matrixWriter);
+        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "T2K TOPK - ORIGINAL", evaluationWriter);
 
         System.out.println("==================================================");
 
@@ -464,6 +486,11 @@ public class T2KMatch extends Executable implements Serializable {
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        double minSim00 = 0.0;
+        executeSimFlooding(FixpointFormula.A, minSim00, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim00, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim00, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
 
@@ -500,7 +527,66 @@ public class T2KMatch extends Executable implements Serializable {
         //TODO add the correspondences to the tables and write them to the disk
     }
 
-    private List<Correspondence<MatchableTableColumn, MatchableTableRow>> ownTopOneForValidation(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences,
+    private ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> hungarianAlgorithm(
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences, Map<Integer, String> finalClassPerTable) {
+
+        ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> hgResult = new ProcessableCollection<>();
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> validateMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences.copy(), finalClassPerTable);
+
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> webTable : validateMatrix.entrySet()) {
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> kbTable : webTable.getValue().entrySet()) {
+                SimpleDirectedGraph<IPGNode<MatchableTableColumn>, CoeffEdge> ipg = createFakeGraphFromCorrespondenceList(kbTable);
+
+                HungarianAlgorithm<MatchableTableColumn> hungarianAlgorithm = new HungarianAlgorithm<>(0.0, true);
+                List<Pair<Pair<SFNode<MatchableTableColumn>, SFNode<MatchableTableColumn>>, Double>> engagements = hungarianAlgorithm.run(ipg);
+                filterGraphResult(hgResult, engagements);
+            }
+        }
+        return hgResult;
+    }
+
+    private ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> stableMarriage(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences,
+        Map<Integer, String> finalClassPerTable) {
+
+        ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> stableMarriageResult = new ProcessableCollection<>();
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> validateMatrix2 = getSchemaCorrespondenceMatrix(schemaCorrespondences.copy(), finalClassPerTable);
+
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> webTable : validateMatrix2.entrySet()) {
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> kbTable : webTable.getValue().entrySet()) {
+                SimpleDirectedGraph<IPGNode<MatchableTableColumn>, CoeffEdge> ipg = createFakeGraphFromCorrespondenceList(kbTable);
+
+                StableMarriage<MatchableTableColumn> stableMarriage = new StableMarriage<>(0.0, true);
+                List<Pair<Pair<SFNode<MatchableTableColumn>, SFNode<MatchableTableColumn>>, Double>> graphResult = stableMarriage.run(ipg);
+                filterGraphResult(stableMarriageResult, graphResult);
+            }
+        }
+        return stableMarriageResult;
+    }
+
+    private void filterGraphResult(ProcessableCollection<Correspondence<MatchableTableColumn, MatchableTableRow>> smResult,
+        List<Pair<Pair<SFNode<MatchableTableColumn>, SFNode<MatchableTableColumn>>, Double>> engagements) {
+        for (Pair<Pair<SFNode<MatchableTableColumn>, SFNode<MatchableTableColumn>>, Double> en : engagements) {
+            Pair<SFNode<MatchableTableColumn>, SFNode<MatchableTableColumn>> pair = en.getFirst();
+            if (pair.getFirst() == null || pair.getSecond() == null || pair.getSecond().getMatchable() == null || pair.getFirst().getMatchable() == null) {
+                continue;
+            }
+            smResult.add(new Correspondence<>(pair.getFirst().getMatchable(), pair.getSecond().getMatchable(), en.getSecond()));
+        }
+    }
+
+    private static SimpleDirectedGraph<IPGNode<MatchableTableColumn>, CoeffEdge> createFakeGraphFromCorrespondenceList(
+        Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entry2) {
+        SimpleDirectedGraph<IPGNode<MatchableTableColumn>, CoeffEdge> ipgSM = new SimpleDirectedGraph<>(CoeffEdge.class);
+
+        for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : entry2.getValue()) {
+            ipgSM.addVertex(new IPGNode<>(new PairwiseConnectivityNode<>(new SFNode<>(corr.getFirstRecord().getIdentifier(), SFNodeType.LITERAL, corr.getFirstRecord()),
+                new SFNode<>(corr.getSecondRecord().getIdentifier(), SFNodeType.LITERAL, corr.getSecondRecord())),
+                corr.getSimilarityScore(), corr.getSimilarityScore(), corr.getSimilarityScore()));
+        }
+        return ipgSM;
+    }
+
+    private List<Correspondence<MatchableTableColumn, MatchableTableRow>> topOne(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences,
         Map<Integer, String> finalClassPerTable) {
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> validateMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable);
 
@@ -529,7 +615,7 @@ public class T2KMatch extends Executable implements Serializable {
             }
 
             sortedFlatList.removeIf(x -> x.getFirstRecord().getTableId() == nodeA.getTableId() && Objects.equals(x.getFirstRecord().getIdentifier(), nodeA.getIdentifier()));
-            sortedFlatList.removeIf(x -> x.getFirstRecord().getTableId() == nodeB.getTableId() && Objects.equals(x.getFirstRecord().getIdentifier(), nodeB.getIdentifier()));
+            sortedFlatList.removeIf(x -> x.getFirstRecord().getTableId() == nodeA.getTableId() && Objects.equals(x.getSecondRecord().getIdentifier(), nodeB.getIdentifier()));
         }
         return result;
     }
