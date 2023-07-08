@@ -137,10 +137,8 @@ public abstract class SimilarityFloodingMatching {
             List<MatchableTableColumn> tmp = new ArrayList<>();
             for (Pair<Integer, MatchableTableColumn> pair : entry.getValue()) {
                 MatchableTableColumn oldColumn = pair.getSecond();
-                MatchableTableColumn newColumn = new MatchableTableColumn(entry.getKey(), kb.getPropertyIndices().get(entry.getKey()).get(oldColumn.getColumnIndex()), oldColumn.getHeader(),
-                    oldColumn.getType(), oldColumn.getIdentifier());
-                originalMatchableToAdaptedMatchable.put(oldColumn, newColumn);
-                tmp.add(oldColumn);
+                MatchableTableColumn newColumn = new MatchableTableColumn(entry.getKey(), oldColumn.getColumnIndex(), oldColumn.getHeader(), oldColumn.getType(), oldColumn.getIdentifier());
+                tmp.add(newColumn);
             }
             result.put(entry.getKey(), tmp);
         }

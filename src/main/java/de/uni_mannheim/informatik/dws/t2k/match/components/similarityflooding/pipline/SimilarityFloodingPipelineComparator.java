@@ -19,7 +19,7 @@ public class SimilarityFloodingPipelineComparator implements Comparator<Matchabl
     @Override
     public double compare(MatchableTableColumn record1, MatchableTableColumn record2, Correspondence<MatchableTableColumn, Matchable> schemaCorrespondence) {
         int firstTableId = record1.getTableId();
-        if (!schemaCorrespondenceMatrix.containsKey(firstTableId)) {
+        if (!schemaCorrespondenceMatrix.containsKey(firstTableId) || schemaCorrespondenceMatrix.get(firstTableId).size() == 0) {
             return 0.0;
         }
 

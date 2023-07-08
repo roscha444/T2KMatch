@@ -12,10 +12,14 @@ import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.ipg.IPGNode;
 import de.uni_mannheim.informatik.dws.winter.matching.algorithms.sf.pcg.SFNodeType;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;
 import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
+import de.uni_mannheim.informatik.dws.winter.model.Matchable;
+import de.uni_mannheim.informatik.dws.winter.preprocessing.datatypes.DataType;
 import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 import de.uni_mannheim.informatik.dws.winter.processing.ProcessableCollection;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,25 +49,34 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
 
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> resultCorrespondences = new ProcessableCollection<>();
 
-        for (List<MatchableTableColumn> webTable : columnsPerWebTable.values()) {
-            if (webTable.size() > 0) {
-                int tableId = webTable.get(0).getTableId();
-                Set<String> dbPediaClassesForTable = classesPerTable.get(tableId);
-                for (String dbPediaClass : dbPediaClassesForTable) {
-                    List<MatchableTableColumn> kbTable = columnsPerKBTable.get(kb.getClassIds().get(dbPediaClass));
-                    if (kbTable != null && kbTable.size() > 0) {
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> webTableKey : schemaCorrespondenceMatrix.entrySet()) {
+            int webTableId = webTableKey.getKey();
+            List<MatchableTableColumn> webTable = columnsPerWebTable.get(webTableId);
 
-                        kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> kbTableKey : webTableKey.getValue().entrySet()) {
+                int kbTableId = kbTableKey.getKey();
+                List<MatchableTableColumn> kbTable = columnsPerKBTable.get(kbTableId);
 
-                        SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable, comparator, fixpointFormula);
-                        sfMatcher.setFilter(filter);
-                        sfMatcher.setMinSim(minSim);
-                        sfMatcher.setRemoveOid(removeOid);
-                        sfMatcher.run();
-                        recordStatistic(sfMatcher);
-                        resultCorrespondences.addAll(sfMatcher.getResult().get());
-                    }
+                kbTable.removeIf(x -> x.getIdentifier().equals("URI"));
+
+                SimilarityFloodingAlgorithm<MatchableTableColumn, MatchableTableRow> sfMatcher = new SimilarityFloodingAlgorithm<>(webTable, kbTable, comparator, fixpointFormula);
+                sfMatcher.setFilter(filter);
+                sfMatcher.setMinSim(minSim);
+                sfMatcher.setRemoveOid(removeOid);
+                sfMatcher.run();
+                recordStatistic(sfMatcher);
+
+                Collection<Correspondence<MatchableTableColumn, MatchableTableRow>> result = sfMatcher.getResult().get();
+
+                for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : result) {
+                    ProcessableCollection<Correspondence<MatchableTableRow, Matchable>> causal = new ProcessableCollection<>();
+                    MatchableTableRow firstCol = new MatchableTableRow(String.valueOf(kbTableId), new Object[0], kbTableId, new DataType[0]);
+                    MatchableTableRow secondCol = new MatchableTableRow(String.valueOf(kbTableId), new Object[0], kbTableId, new DataType[0]);
+                    causal.add(new Correspondence<>(firstCol, secondCol, 0));
+                    corr.setCausalCorrespondences(causal);
                 }
+
+                resultCorrespondences.addAll(result);
             }
         }
         return resultCorrespondences;
@@ -73,8 +86,11 @@ public class SimilarityFloodingPipeline extends SimilarityFloodingMatching {
 
         // TODO (ask Alex which part of the matrix should be included in the statistics)
         List<IPGNode<MatchableTableColumn>> filteredSchemaCorrespondence = sfMatcher.getIpg().vertexSet().stream()
-            .filter(x -> x.getCurrSim() > minSim && x.getPairwiseConnectivityNode().getA().getMatchable() != null && x.getPairwiseConnectivityNode().getB().getMatchable() != null
-                && (removeOid || x.getPairwiseConnectivityNode().getA().getType().equals(SFNodeType.LITERAL) && x.getPairwiseConnectivityNode().getB().getType().equals(SFNodeType.LITERAL)))
+            .filter(
+                x -> x.getCurrSim() > minSim
+                    && x.getPairwiseConnectivityNode().getA().getMatchable() != null
+                    && x.getPairwiseConnectivityNode().getB().getMatchable() != null
+                    && (removeOid || x.getPairwiseConnectivityNode().getA().getType().equals(SFNodeType.LITERAL) && x.getPairwiseConnectivityNode().getB().getType().equals(SFNodeType.LITERAL)))
             .collect(Collectors.toList());
 
         countMatrices++;

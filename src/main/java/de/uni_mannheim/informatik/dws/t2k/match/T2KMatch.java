@@ -399,7 +399,7 @@ public class T2KMatch extends Executable implements Serializable {
          * One-to-one Matching
          ***********************************************/
 
-        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences);
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable);
         instanceCorrespondences = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, 1, 0.0);
         Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondencesTopK = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, 1, 0.0);
         /***********************************************
@@ -419,20 +419,16 @@ public class T2KMatch extends Executable implements Serializable {
          ***********************************************/
         System.out.println("==================================================");
 
-        printMetaInformationen(classesPerTable, schemaCorrespondences);
-
-        System.out.println("==================================================");
-
         System.out.println("T2K - Vanilla");
-        printStatistics(classesPerTable, schemaCorrespondences);
+        printStatistics(finalClassPerTable, schemaCorrespondences);
+        System.out.println();
+        printMetaInformation(classesPerTable, getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable));
 
         System.out.println("==================================================");
 
         System.out.println("T2K - TOPK");
-        printStatistics(classesPerTable, schemaCorrespondencesTopK);
-
-        System.out.println("==================================================");
-
+        System.out.println("");
+        printStatistics(finalClassPerTable, schemaCorrespondencesTopK);
         evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "");
 
         System.out.println("==================================================");
@@ -442,23 +438,23 @@ public class T2KMatch extends Executable implements Serializable {
         System.out.println("==================================================");
 
         double minSim006 = 0.06;
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
 
         System.out.println("==================================================");
 
         double minSim004 = 0.04;
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
 
         System.out.println("==================================================");
 
         double minSim002 = 0.02;
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, schemaCorrespondenceMatrix, comparator);
-        executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
+        executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator);
 
         System.out.println("==================================================");
 
@@ -492,200 +488,37 @@ public class T2KMatch extends Executable implements Serializable {
         //TODO add the correspondences to the tables and write them to the disk
     }
 
-    private void printMetaInformationen(Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
-        System.out.println("META INFORMATIONEN");
+    private void printMetaInformation(Map<Integer, Set<String>> classesPerTable, Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix) {
+        System.out.println("META INFORMATION");
 
-        int tmp = 0;
-        for (Entry<Integer, List<MatchableTableColumn>> entry : getColumnPerDBPediaTable(classesPerTable).entrySet()) {
-            tmp += entry.getValue().size();
+        Map<Integer, List<MatchableTableColumn>> webTableTmp = getColumnPerWBTable();
+        Map<Integer, List<MatchableTableColumn>> kbTableMap = getColumnPerDBPediaTable(classesPerTable);
+
+        int kbHeaderLength = 0;
+        int webTableHeaderLength = 0;
+        int matrixSizes = 0;
+        int matrices = 0;
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> entry : schemaCorrespondenceMatrix.entrySet()) {
+            int firstTableId = entry.getKey();
+            List<MatchableTableColumn> webTableList = webTableTmp.get(firstTableId);
+            webTableHeaderLength += webTableList.size();
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entryValue : entry.getValue().entrySet()) {
+                int secondTableId = entryValue.getKey();
+                List<MatchableTableColumn> kbTableList = kbTableMap.get(secondTableId);
+                kbHeaderLength += (kbTableList.size() - 1); // remove URI header
+                matrixSizes += webTableList.size() * kbTableList.size();
+                matrices++;
+            }
         }
-        int averageKnowledgeHeaderLength = tmp / getColumnPerDBPediaTable(classesPerTable).size();
 
-        tmp = 0;
-        Map<Integer, List<MatchableTableColumn>> webTableTmp = web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
-        for (Entry<Integer, List<MatchableTableColumn>> entry : webTableTmp.entrySet()) {
-            tmp += entry.getValue().size();
-        }
-        int averageWebTableHeaderLength = tmp / webTableTmp.size();
-
-        int averageMatrixSize = calcAverageMatrix(classesPerTable, schemaCorrespondences.get().stream().collect(Collectors.groupingBy(x -> x.getFirstRecord().getTableId())));
+        int averageKnowledgeHeaderLength = kbHeaderLength / kbTableMap.size();
+        int averageWebTableHeaderLength = webTableHeaderLength / webTableTmp.size();
+        int averageMatrixSize = matrixSizes / matrices;
 
         System.out.println("Avg KBTabellen Attribut Größe " + averageKnowledgeHeaderLength);
         System.out.println("Avg WebTabellen Attribut Größe " + averageWebTableHeaderLength);
+        System.out.println("Anzahl Matrizen " + matrices);
         System.out.println("Avg Matrix Größe " + averageMatrixSize);
-    }
-
-    private void executeSimFlooding(FixpointFormula formula, Double minSim, Filter filter, Map<Integer, Set<String>> classesPerTable,
-        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix,
-        SimilarityFloodingPipelineComparator comparator) throws Exception {
-        String runId = "SF " + formula.toString() + " " + minSim.toString() + " " + filter.toString();
-        System.out.println(runId);
-        SimilarityFloodingPipeline simFlooding = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, minSim, formula, comparator);
-        simFlooding.setFilter(filter);
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> simFloodingResult = simFlooding.run();
-        System.out.println("");
-        System.out.println("Statistics after SF");
-        simFlooding.getMatrixStatistics();
-        evaluateSchemaCorrespondences(simFloodingResult, runId);
-        System.out.println("");
-        System.out.println("Statistics after " + filter.toString());
-        printStatistics(classesPerTable, simFloodingResult);
-    }
-
-    private void printStatistics(Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
-        Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> correspondencesByWebTable =
-            schemaCorrespondences.get().stream().collect(Collectors.groupingBy(x -> x.getFirstRecord().getTableId()));
-        int maxFields = correspondencesByWebTable.values().stream().max(Comparator.comparingInt(List::size)).orElse(new ArrayList<>()).size();
-        int minFields = correspondencesByWebTable.values().stream().min(Comparator.comparingInt(List::size)).orElse(new ArrayList<>()).size();
-        int sumCorrespondences = schemaCorrespondences.size();
-        double avgFieldsInMatrix = (double) sumCorrespondences / correspondencesByWebTable.size();
-
-        System.out.println("Anzahl Korrespondenzen " + sumCorrespondences);
-        System.out.println("Max Felder in Matrix " + maxFields);
-        System.out.println("Min Felder in Matrix " + minFields);
-        System.out.println("Avg Felder in Matrix " + avgFieldsInMatrix);
-        System.out.println();
-
-        // TODO check this
-        checkForClassCorrespondenceDuplicates(classesPerTable, correspondencesByWebTable);
-    }
-
-    private void checkForClassCorrespondenceDuplicates(Map<Integer, Set<String>> classesPerTable,
-        Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> correspondencesByWebTable) {
-        for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entry : correspondencesByWebTable.entrySet()) {
-            List<Correspondence<MatchableTableColumn, MatchableTableRow>> list = entry.getValue();
-
-            List<MatchableTableColumn> classCorrespondenceColumns = new ArrayList<>();
-            String classCorrespodence = null;
-            for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : list) {
-                outloop:
-                for (String dbPediaClass : classesPerTable.get(entry.getKey())) {
-                    List<MatchableTableColumn> kbTable = getColumnPerDBPediaTable(classesPerTable).get(kb.getClassIds().get(dbPediaClass));
-
-                    if (kbTable == null) {
-                        continue;
-                    }
-
-                    for (MatchableTableColumn kb : kbTable) {
-                        if (classCorrespodence == null && kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier())) {
-                            classCorrespondenceColumns.add(kb);
-                            classCorrespodence = dbPediaClass;
-                            break outloop;
-                        }
-                        if (kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier()) && classCorrespodence != null && classCorrespodence.equals(dbPediaClass)) {
-                            break outloop;
-                        }
-                        if (kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier()) && classCorrespodence != null && !classCorrespodence.equals(dbPediaClass)) {
-
-                            List<MatchableTableColumn> tmp = getColumnPerDBPediaTable(classesPerTable).get(classCorrespodence);
-                            if (tmp == null) {
-                                break outloop;
-                            }
-                            boolean thisColExistsInClassCorr = tmp.stream().anyMatch(x -> x.getIdentifier().equals(kb.getIdentifier()));
-                            if (thisColExistsInClassCorr) {
-                                break outloop;
-                            }
-
-                            boolean containsAll = true;
-                            for (MatchableTableColumn classCorresPondenceColumn : classCorrespondenceColumns) {
-                                boolean contain = false;
-                                for (MatchableTableColumn kb2 : kbTable) {
-                                    if (classCorresPondenceColumn.equals(kb2)) {
-                                        contain = true;
-                                        break;
-                                    }
-                                }
-                                if (!contain) {
-                                    containsAll = false;
-                                    break;
-                                }
-                            }
-
-                            if (containsAll) {
-                                classCorrespondenceColumns.add(kb);
-                                classCorrespodence = dbPediaClass;
-                                break outloop;
-                            }
-
-                            System.out.println("!!ES WURDEN KORRESPONDENZEN AUS ZWEI KLASSEN GEFUNDEN!! " + corr.getFirstRecord().getTableId());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private int calcAverageMatrix(Map<Integer, Set<String>> classesPerTable,
-        Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> correspondencesByWebTable) {
-        int avgMatrixSize = 0;
-        int matrixCount = 0;
-        Map<Integer, List<MatchableTableColumn>> webTableTmp = web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
-        for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entry : correspondencesByWebTable.entrySet()) {
-            List<Correspondence<MatchableTableColumn, MatchableTableRow>> list = entry.getValue();
-
-            List<MatchableTableColumn> classCorrespondenceColumns = new ArrayList<>();
-            String classCorrespodence = null;
-            for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : list) {
-                outloop:
-                for (String dbPediaClass : classesPerTable.get(entry.getKey())) {
-                    List<MatchableTableColumn> kbTable = getColumnPerDBPediaTable(classesPerTable).get(kb.getClassIds().get(dbPediaClass));
-
-                    if (kbTable == null) {
-                        continue;
-                    }
-
-                    for (MatchableTableColumn kb : kbTable) {
-                        if (classCorrespodence == null && kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier())) {
-                            classCorrespondenceColumns.add(kb);
-                            classCorrespodence = dbPediaClass;
-                            break outloop;
-                        }
-                        if (kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier()) && classCorrespodence != null && classCorrespodence.equals(dbPediaClass)) {
-                            break outloop;
-                        }
-                        if (kb.getIdentifier().equals(corr.getSecondRecord().getIdentifier()) && classCorrespodence != null && !classCorrespodence.equals(dbPediaClass)) {
-
-                            List<MatchableTableColumn> tmp = getColumnPerDBPediaTable(classesPerTable).get(classCorrespodence);
-                            if (tmp == null) {
-                                break outloop;
-                            }
-                            boolean thisColExistsInClassCorr = tmp.stream().anyMatch(x -> x.getIdentifier().equals(kb.getIdentifier()));
-                            if (thisColExistsInClassCorr) {
-                                break outloop;
-                            }
-
-                            boolean containsAll = true;
-                            for (MatchableTableColumn classCorresPondenceColumn : classCorrespondenceColumns) {
-                                boolean contain = false;
-                                for (MatchableTableColumn kb2 : kbTable) {
-                                    if (classCorresPondenceColumn.equals(kb2)) {
-                                        contain = true;
-                                        break;
-                                    }
-                                }
-                                if (!contain) {
-                                    containsAll = false;
-                                    break;
-                                }
-                            }
-
-                            if (containsAll) {
-                                classCorrespondenceColumns.add(kb);
-                                classCorrespodence = dbPediaClass;
-                                break outloop;
-                            }
-                        }
-                    }
-                }
-            }
-            List<MatchableTableColumn> kbTable = getColumnPerDBPediaTable(classesPerTable).get(kb.getClassIds().get(classCorrespodence));
-
-            if (kbTable != null) {
-                avgMatrixSize += (kbTable.size() * webTableTmp.get(entry.getKey()).size());
-                matrixCount++;
-            }
-        }
-        return avgMatrixSize / matrixCount;
     }
 
     protected Map<Integer, List<MatchableTableColumn>> getColumnPerDBPediaTable(Map<Integer, Set<String>> classesPerTable) {
@@ -786,7 +619,8 @@ public class T2KMatch extends Executable implements Serializable {
             List<MatchableTableColumn> tmp = new ArrayList<>();
             for (Pair<Integer, MatchableTableColumn> pair : entry.getValue()) {
                 MatchableTableColumn oldColumn = pair.getSecond();
-                tmp.add(oldColumn);
+                MatchableTableColumn newColumn = new MatchableTableColumn(entry.getKey(), oldColumn.getColumnIndex(), oldColumn.getHeader(), oldColumn.getType(), oldColumn.getIdentifier());
+                tmp.add(newColumn);
             }
             result.put(entry.getKey(), tmp);
         }
@@ -794,8 +628,62 @@ public class T2KMatch extends Executable implements Serializable {
         return result;
     }
 
-    private static Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> getSchemaCorrespondenceMatrix(
-        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
+    protected Map<Integer, List<MatchableTableColumn>> getColumnPerWBTable() {
+        return web.getSchema().get().stream().collect(Collectors.groupingBy(MatchableTableColumn::getTableId));
+    }
+
+    private void executeSimFlooding(FixpointFormula formula, Double minSim, Filter filter, Map<Integer, Set<String>> classesPerTable, Map<Integer, String> finalClassPerTable,
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix,
+        SimilarityFloodingPipelineComparator comparator) throws Exception {
+
+        String runId = "SF " + formula.toString() + " " + minSim.toString() + " " + filter.toString();
+        System.out.println(runId);
+
+        SimilarityFloodingPipeline simFlooding = new SimilarityFloodingPipeline(web, kb, classesPerTable, schemaCorrespondenceMatrix, minSim, formula, comparator);
+        simFlooding.setFilter(filter);
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> simFloodingResult = simFlooding.run();
+
+        System.out.println();
+
+        System.out.println("Statistics after SF");
+        simFlooding.getMatrixStatistics();
+        evaluateSchemaCorrespondences(simFloodingResult, runId);
+
+        System.out.println();
+
+        System.out.println("Statistics after " + filter.toString());
+        printStatistics(finalClassPerTable, simFloodingResult);
+    }
+
+    private void printStatistics(Map<Integer, String> finalClassPerTable, Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences) {
+
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable);
+
+        int maxFields = Integer.MIN_VALUE;
+        int minFields = Integer.MAX_VALUE;
+        int countFields = 0;
+        int countMatrices = 0;
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> entry : schemaCorrespondenceMatrix.entrySet()) {
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entryValue : entry.getValue().entrySet()) {
+                int fieldCount = entryValue.getValue().size();
+                maxFields = Math.max(maxFields, fieldCount);
+                minFields = Math.min(minFields, fieldCount);
+                countFields += fieldCount;
+                countMatrices++;
+            }
+        }
+
+        double avgFieldsInMatrix = (double) countFields / countMatrices;
+
+        System.out.println("Anzahl Korrespondenzen " + schemaCorrespondences.size());
+        System.out.println("Max Felder in Matrix " + maxFields);
+        System.out.println("Min Felder in Matrix " + minFields);
+        System.out.println("Avg Felder in Matrix " + avgFieldsInMatrix);
+        System.out.println();
+    }
+
+    private Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> getSchemaCorrespondenceMatrix(
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences, Map<Integer, String> finalClassPerTable) {
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix = new HashMap<>();
 
         for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : schemaCorrespondences.get()) {
@@ -804,12 +692,60 @@ public class T2KMatch extends Executable implements Serializable {
                 schemaCorrespondenceMatrix.put(firstTableId, new HashMap<>());
             }
 
-            int secondTableId = corr.getSecondRecord().getTableId();
+            int secondTableId = 0;
             if (!schemaCorrespondenceMatrix.get(firstTableId).containsKey(secondTableId)) {
                 schemaCorrespondenceMatrix.get(firstTableId).put(secondTableId, new ArrayList<>());
             }
             schemaCorrespondenceMatrix.get(firstTableId).get(secondTableId).add(corr);
         }
+
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> entry : schemaCorrespondenceMatrix.entrySet()) {
+            int webTableId = entry.getKey();
+            Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> newSecondTableIdMap = new HashMap<>();
+
+            Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> list = entry.getValue();
+            List<Correspondence<MatchableTableColumn, MatchableTableRow>> correspondenceList = list.get(0);
+
+            // count rdfLabels
+            List<Correspondence<MatchableTableColumn, MatchableTableRow>> rdfLabels = new ArrayList<>();
+            for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : correspondenceList) {
+                if (corr.getSecondRecord().getIdentifier().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
+                    rdfLabels.add(corr);
+                }
+            }
+
+            if (rdfLabels.size() > 1) {
+                throw new RuntimeException();
+            }
+
+            for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : correspondenceList) {
+                if (corr.getCausalCorrespondences() == null
+                    || corr.getCausalCorrespondences().size() == 0
+                    || corr.getSecondRecord().getIdentifier().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
+                    int secondTableId = kb.getClassIds().get(finalClassPerTable.get(webTableId));
+                    if (!newSecondTableIdMap.containsKey(secondTableId)) {
+                        newSecondTableIdMap.put(secondTableId, new ArrayList<>());
+                    }
+
+                    MatchableTableColumn mt = new MatchableTableColumn(secondTableId, corr.getSecondRecord().getColumnIndex(), corr.getSecondRecord().getHeader(), corr.getSecondRecord().getType(),
+                        corr.getSecondRecord().getIdentifier());
+                    corr.setSecondRecord(mt);
+                    newSecondTableIdMap.get(secondTableId).add(corr);
+                } else {
+                    int secondTableId = new ArrayList<>(corr.getCausalCorrespondences().get()).get(0).getSecondRecord().getTableId();
+                    if (!newSecondTableIdMap.containsKey(secondTableId)) {
+                        newSecondTableIdMap.put(secondTableId, new ArrayList<>());
+                    }
+
+                    MatchableTableColumn mt = new MatchableTableColumn(secondTableId, corr.getSecondRecord().getColumnIndex(), corr.getSecondRecord().getHeader(), corr.getSecondRecord().getType(),
+                        corr.getSecondRecord().getIdentifier());
+                    corr.setSecondRecord(mt);
+                    newSecondTableIdMap.get(secondTableId).add(corr);
+                }
+            }
+            entry.setValue(newSecondTableIdMap);
+        }
+
         return schemaCorrespondenceMatrix;
     }
 
@@ -834,20 +770,36 @@ public class T2KMatch extends Executable implements Serializable {
     
     protected void evaluateSchemaCorrespondences(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences, String name) {
         Performance schemaPerf = null;
-        if(schemaGs!=null) {
+        double recallAtGT = 0.0;
+        double NBPRow = 0.0;
+        double NBPCol = 0.0;
+        double BPCol = 0.0;
+        double BPRow = 0.0;
+        if (schemaGs != null) {
             schemaCorrespondences.distinct();
             MatchingEvaluator<MatchableTableColumn, MatchableTableRow> schemaEvaluator = new MatchingEvaluator<>();
             Collection<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondencesCollection = schemaCorrespondences.get();
             System.out.printf("%d %s schema correspondences%n", schemaCorrespondencesCollection.size(), name);
             schemaPerf = schemaEvaluator.evaluateMatching(schemaCorrespondencesCollection, schemaGs);
+            recallAtGT = schemaEvaluator.evaluateRecallAtGroundTruth(schemaCorrespondencesCollection, schemaGs);
+            NBPCol = schemaEvaluator.evaluateColNonBinaryPrecision(schemaCorrespondencesCollection, schemaGs);
+            BPCol = schemaEvaluator.evaluateColBinaryPrecision(schemaCorrespondencesCollection, schemaGs);
+            NBPRow = schemaEvaluator.evaluateRowNonBinaryPrecision(schemaCorrespondencesCollection, schemaGs);
+            BPRow = schemaEvaluator.evaluateRowBinaryPrecision(schemaCorrespondencesCollection, schemaGs);
         }
 
         if(schemaPerf!=null) {
-            System.out
-                .printf(
-                "Schema Performance:\n\tPrecision: %.4f\n\tRecall: %.4f\n\tF1: %.4f%n",
-                    schemaPerf.getPrecision(), schemaPerf.getRecall(),
-                    schemaPerf.getF1());
+            System.out.printf(
+                "Schema Performance:\n" +
+                    "\tPrecision: %.4f\n" +
+                    "\tRecall: %.4f\n" +
+                    "\tF1: %.4f\n\n" +
+                    "\tRecall@GroundTruth: %.4f\n\n" +
+                    "\tnon binary Precision (column): %.4f\n" +
+                    "\tbinary Precision (column):: %.4f\n\n" +
+                    "\tnon binary Precision (row): %.4f\n" +
+                    "\tbinary Precision (row):: %.4f\n\n",
+                schemaPerf.getPrecision(), schemaPerf.getRecall(), schemaPerf.getF1(), recallAtGT, NBPCol, BPCol, NBPRow, BPRow);
         }
     }
     
