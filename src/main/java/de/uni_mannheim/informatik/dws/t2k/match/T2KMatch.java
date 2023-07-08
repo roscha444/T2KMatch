@@ -70,6 +70,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -427,11 +428,14 @@ public class T2KMatch extends Executable implements Serializable {
         System.out.println("==================================================");
 
         System.out.println("T2K - TOPK");
-        System.out.println("");
+        System.out.println();
         printStatistics(finalClassPerTable, schemaCorrespondencesTopK);
         evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "");
 
         System.out.println("==================================================");
+        System.out.println("T2K - TOPK - VALIDIERUNG");
+        List<Correspondence<MatchableTableColumn, MatchableTableRow>> result = ownTopOneForValidation(schemaCorrespondences, finalClassPerTable);
+        evaluateSchemaCorrespondences(new ProcessableCollection<>(result), "own top k");
 
         SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
 
@@ -486,6 +490,40 @@ public class T2KMatch extends Executable implements Serializable {
         ExtractedTriple.writeCSV(new File(results, "extracted_triples.csv"), triples.get());
 
         //TODO add the correspondences to the tables and write them to the disk
+    }
+
+    private List<Correspondence<MatchableTableColumn, MatchableTableRow>> ownTopOneForValidation(Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences,
+        Map<Integer, String> finalClassPerTable) {
+        Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> validateMatrix = getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable);
+
+        List<Correspondence<MatchableTableColumn, MatchableTableRow>> sortedFlatList = new ArrayList<>();
+        for (Entry<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> entry : validateMatrix.entrySet()) {
+            for (Entry<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> entry2 : entry.getValue().entrySet()) {
+                sortedFlatList.addAll(entry2.getValue());
+            }
+        }
+
+        sortedFlatList.sort(Comparator.<Correspondence<MatchableTableColumn, MatchableTableRow>>comparingDouble(Correspondence::getSimilarityScore).reversed());
+
+        List<Correspondence<MatchableTableColumn, MatchableTableRow>> result = new ArrayList<>();
+        List<Correspondence<MatchableTableColumn, MatchableTableRow>> sortedFlatListCopy = new ArrayList<>(sortedFlatList);
+        for (Correspondence<MatchableTableColumn, MatchableTableRow> list : sortedFlatListCopy) {
+
+            MatchableTableColumn nodeA = list.getFirstRecord();
+            MatchableTableColumn nodeB = list.getSecondRecord();
+
+            for (Correspondence<MatchableTableColumn, MatchableTableRow> pair : sortedFlatList) {
+                if (pair.getFirstRecord().getTableId() == nodeA.getTableId() && Objects.equals(pair.getFirstRecord().getIdentifier(), nodeA.getIdentifier())
+                    && pair.getSecondRecord().getTableId() == nodeB.getTableId() && Objects.equals(pair.getSecondRecord().getIdentifier(), nodeB.getIdentifier())) {
+                    result.add(pair);
+                    break;
+                }
+            }
+
+            sortedFlatList.removeIf(x -> x.getFirstRecord().getTableId() == nodeA.getTableId() && Objects.equals(x.getFirstRecord().getIdentifier(), nodeA.getIdentifier()));
+            sortedFlatList.removeIf(x -> x.getFirstRecord().getTableId() == nodeB.getTableId() && Objects.equals(x.getFirstRecord().getIdentifier(), nodeB.getIdentifier()));
+        }
+        return result;
     }
 
     private void printMetaInformation(Map<Integer, Set<String>> classesPerTable, Map<Integer, Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>>> schemaCorrespondenceMatrix) {

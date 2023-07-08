@@ -17,9 +17,6 @@
  */
 package de.uni_mannheim.informatik.dws.t2k.match.components;
 
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_mannheim.informatik.dws.t2k.match.blocking.ClassAndTypeBasedSchemaBlocker;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.SchemaLabelComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
@@ -32,6 +29,8 @@ import de.uni_mannheim.informatik.dws.winter.model.Correspondence;
 import de.uni_mannheim.informatik.dws.winter.processing.Processable;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 
@@ -42,38 +41,38 @@ import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimila
  */
 public class LabelBasedSchemaMatching {
 
-	private MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine;
-	private WebTables web;
-	private KnowledgeBase kb;
-	private Map<Integer, Set<String>> classesPerTable;
-	private Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences;
-	
-	/**
-	 * @param instanceCorrespondences the instanceCorrespondences to set
-	 */
-	public void setInstanceCorrespondences(
-			Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-		this.instanceCorrespondences = instanceCorrespondences;
-	}
-	
-	public LabelBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-		this.matchingEngine = matchingEngine;
-		this.web = web;
-		this.kb = kb;
-		this.classesPerTable = classesPerTable;
-		this.instanceCorrespondences = instanceCorrespondences;
-	}
-	
-	public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> run() throws Exception {		
-		// create the blocker
-		ClassAndTypeBasedSchemaBlocker classAndTypeBasedSchemaBlocker = new ClassAndTypeBasedSchemaBlocker(kb, classesPerTable);
-		
-//		create the schema matching rule
-		LinearCombinationMatchingRule<MatchableTableColumn, MatchableTableRow> lRule = new LinearCombinationMatchingRule<>(0.0);
-		SchemaLabelComparator labelComparator = new SchemaLabelComparator(new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5));
-		lRule.addComparator(labelComparator, 1.0);
+    private MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine;
+    private WebTables web;
+    private KnowledgeBase kb;
+    private Map<Integer, Set<String>> classesPerTable;
+    private Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences;
 
-		return matchingEngine.runSchemaMatching(web.getSchema(), kb.getSchema(), instanceCorrespondences, lRule, classAndTypeBasedSchemaBlocker);
-	}
-	
+    /**
+     * @param instanceCorrespondences the instanceCorrespondences to set
+     */
+    public void setInstanceCorrespondences(
+        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
+        this.instanceCorrespondences = instanceCorrespondences;
+    }
+
+    public LabelBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
+        this.matchingEngine = matchingEngine;
+        this.web = web;
+        this.kb = kb;
+        this.classesPerTable = classesPerTable;
+        this.instanceCorrespondences = instanceCorrespondences;
+    }
+
+    public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> run() throws Exception {
+        // create the blocker
+        ClassAndTypeBasedSchemaBlocker classAndTypeBasedSchemaBlocker = new ClassAndTypeBasedSchemaBlocker(kb, classesPerTable);
+
+//		create the schema matching rule
+        LinearCombinationMatchingRule<MatchableTableColumn, MatchableTableRow> lRule = new LinearCombinationMatchingRule<>(0.0);
+        SchemaLabelComparator labelComparator = new SchemaLabelComparator(new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.3, 0.3));
+        lRule.addComparator(labelComparator, 1.0);
+
+        return matchingEngine.runSchemaMatching(web.getSchema(), kb.getSchema(), instanceCorrespondences, lRule, classAndTypeBasedSchemaBlocker);
+    }
+
 }
