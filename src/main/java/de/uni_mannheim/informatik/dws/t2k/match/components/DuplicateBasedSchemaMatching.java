@@ -78,19 +78,19 @@ public class DuplicateBasedSchemaMatching {
         this.finalPropertySimilarityThreshold = finalPropertySimilarityThreshold;
     }
 
-    private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.3, 0.3);
+    private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5);
 
     private SimilarityMeasure<Double> numericSimilarity = new DeviationSimilarity();
 
     private WeightedDateSimilarity dateSimilarity = new WeightedDateSimilarity(1, 3, 5);
 
-    private int numVotesPerValue = 1;
+    private int numVotesPerValue = 0;
 
     private int numCorrespondencesPerColumn = 3;
 
-    private int numInstanceCandidates = 3;
+    private int numInstanceCandidates = 2;
 
-    private double instanceCandidateThreshold = 0.3;
+    private double instanceCandidateThreshold = 0.5;
 
     public DuplicateBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, SurfaceForms surfaceForms, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences, boolean matchKeys) {
         this.matchingEngine = matchingEngine;
@@ -134,7 +134,7 @@ public class DuplicateBasedSchemaMatching {
 
         // after aggregation, the best 3 schema correspondences for each attribute on the lhs are created
 
-        // schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, numCorrespondencesPerColumn, 0.0);
+        schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, numCorrespondencesPerColumn, 0.0);
 
         return schemaCorrespondences;
     }
