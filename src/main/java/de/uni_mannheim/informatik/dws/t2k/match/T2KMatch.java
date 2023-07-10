@@ -428,7 +428,7 @@ public class T2KMatch extends Executable implements Serializable {
          ***********************************************/
 
         CSVWriter evaluationWriter = new CSVWriter(new FileWriter(new File(results, "evaluation.csv")), ';');
-        evaluationWriter.writeNext(new String[]{"ID", "Count", "Precision", "Recall", "F1", "Recall@GT", "NPB C", "BP C", "NBP R", "BP R"});
+        evaluationWriter.writeNext(new String[]{"ID", "Count", "Precision", "Recall", "F1", "Recall@GT", "NBP C", "BP C", "NBP R", "BP R"});
         CSVWriter matrixWriter = new CSVWriter(new FileWriter(new File(results, "matrix.csv")), ';');
         SimilarityFloodingPipelineComparator comparator = new SimilarityFloodingPipelineComparator(schemaCorrespondenceMatrix);
 
@@ -439,6 +439,13 @@ public class T2KMatch extends Executable implements Serializable {
         System.out.println();
         printMetaInformation(classesPerTable, getSchemaCorrespondenceMatrix(schemaCorrespondences, finalClassPerTable));
         evaluateSchemaCorrespondences(schemaCorrespondences, "T2K Vanilla", evaluationWriter);
+
+        System.out.println("==================================================");
+
+        System.out.println("T2K - TOPK - ORIGINAL");
+        System.out.println();
+        printStatistics("T2K TOPK - ORIGINAL", finalClassPerTable, schemaCorrespondencesTopK, matrixWriter);
+        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "T2K TOPK - ORIGINAL", evaluationWriter);
 
         System.out.println("==================================================");
 
@@ -459,38 +466,187 @@ public class T2KMatch extends Executable implements Serializable {
         // maximumBipartiteMatchingAlgorithm.run();
         // evaluateSchemaCorrespondences(maximumBipartiteMatchingAlgorithm.getResult(), "T2K MaximumBipartiteMatchingAlgorithm", evaluationWriter);
 
-        System.out.println("==================================================");
-
-        System.out.println("T2K - TOPK - ORIGINAL");
-        System.out.println();
-        printStatistics("T2K TOPK - ORIGINAL", finalClassPerTable, schemaCorrespondencesTopK, matrixWriter);
-        evaluateSchemaCorrespondences(schemaCorrespondencesTopK, "T2K TOPK - ORIGINAL", evaluationWriter);
-
-        System.out.println("==================================================");
-
         double minSim006 = 0.06;
+        double minSim005 = 0.05;
+        double minSim004 = 0.04;
+        double minSim003 = 0.03;
+        double minSim002 = 0.02;
+        double minSim001 = 0.01;
+        double minSim00 = 0.0;
+
+        System.out.println("==================================================");
+
+        // FixpointFormula.Basic
+
+        // executeSimFlooding(FixpointFormula.Basic, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim005, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim005, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim005, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim003, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim003, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim003, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim001, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim001, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim001, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        // System.out.println("==================================================");
+//
+        // executeSimFlooding(FixpointFormula.Basic, minSim00, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim00, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        // executeSimFlooding(FixpointFormula.Basic, minSim00, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+//
+        System.out.println("==================================================");
+
+        // FixpointFormula.
         executeSimFlooding(FixpointFormula.A, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
+        executeSimFlooding(FixpointFormula.A, minSim005, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim005, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim005, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
-        double minSim004 = 0.04;
+        System.out.println("==================================================");
+
         executeSimFlooding(FixpointFormula.A, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
 
-        double minSim002 = 0.02;
+        executeSimFlooding(FixpointFormula.A, minSim003, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim003, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim003, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
-        double minSim00 = 0.0;
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.A, minSim001, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim001, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.A, minSim001, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
         executeSimFlooding(FixpointFormula.A, minSim00, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim00, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
         executeSimFlooding(FixpointFormula.A, minSim00, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        // FixpointFormula.B
+
+        //  executeSimFlooding(FixpointFormula.B, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim005, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim005, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim005, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim003, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim003, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim003, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim001, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim001, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim001, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        //  executeSimFlooding(FixpointFormula.B, minSim00, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim00, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        //  executeSimFlooding(FixpointFormula.B, minSim00, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        //  System.out.println("==================================================");
+
+        // FixpointFormula.C
+
+        executeSimFlooding(FixpointFormula.C, minSim006, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim006, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim006, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim005, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim005, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim005, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim004, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim004, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim004, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim003, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim003, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim003, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim002, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim002, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim002, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim001, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim001, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim001, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+
+        System.out.println("==================================================");
+
+        executeSimFlooding(FixpointFormula.C, minSim00, Filter.StableMarriage, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim00, Filter.TopOneK, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
+        executeSimFlooding(FixpointFormula.C, minSim00, Filter.HungarianAlgorithm, classesPerTable, finalClassPerTable, schemaCorrespondenceMatrix, comparator, evaluationWriter, matrixWriter);
 
         System.out.println("==================================================");
 
@@ -843,18 +999,6 @@ public class T2KMatch extends Executable implements Serializable {
 
             Map<Integer, List<Correspondence<MatchableTableColumn, MatchableTableRow>>> list = entry.getValue();
             List<Correspondence<MatchableTableColumn, MatchableTableRow>> correspondenceList = list.get(0);
-
-            // count rdfLabels
-            List<Correspondence<MatchableTableColumn, MatchableTableRow>> rdfLabels = new ArrayList<>();
-            for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : correspondenceList) {
-                if (corr.getSecondRecord().getIdentifier().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
-                    rdfLabels.add(corr);
-                }
-            }
-
-            if (rdfLabels.size() > 1) {
-                throw new RuntimeException();
-            }
 
             for (Correspondence<MatchableTableColumn, MatchableTableRow> corr : correspondenceList) {
                 if (corr.getCausalCorrespondences() == null
