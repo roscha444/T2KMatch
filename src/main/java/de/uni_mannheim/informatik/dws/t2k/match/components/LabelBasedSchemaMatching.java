@@ -33,11 +33,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 
  * Component that runs the label-based schema matching.
- * 
- * @author Oliver Lehmberg (oli@dwslab.de)
  *
+ * @author Oliver Lehmberg (oli@dwslab.de)
  */
 public class LabelBasedSchemaMatching {
 
@@ -55,7 +53,8 @@ public class LabelBasedSchemaMatching {
         this.instanceCorrespondences = instanceCorrespondences;
     }
 
-    public LabelBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
+    public LabelBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, Map<Integer, Set<String>> classesPerTable,
+        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
         this.matchingEngine = matchingEngine;
         this.web = web;
         this.kb = kb;
@@ -69,7 +68,7 @@ public class LabelBasedSchemaMatching {
 
 //		create the schema matching rule
         LinearCombinationMatchingRule<MatchableTableColumn, MatchableTableRow> lRule = new LinearCombinationMatchingRule<>(0.0);
-        SchemaLabelComparator labelComparator = new SchemaLabelComparator(new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.4, 0.4));
+        SchemaLabelComparator labelComparator = new SchemaLabelComparator(new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5));
         lRule.addComparator(labelComparator, 1.0);
 
         return matchingEngine.runSchemaMatching(web.getSchema(), kb.getSchema(), instanceCorrespondences, lRule, classAndTypeBasedSchemaBlocker);
