@@ -1,5 +1,5 @@
 ### ==============================================================
-#### THIS REPOSITORY IS A COPY OF https://github.com/olehmberg/T2KMatch
+#### Dieses Repistory ist eine Kopie von https://github.com/olehmberg/T2KMatch im Rahmen der Bachelorarbeit "Holistische Integration von WebDaten"
 ### ==============================================================
 
 # T2K Match
