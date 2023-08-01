@@ -31,6 +31,11 @@ public class MatchableTableColumn extends SFMatchable implements Matchable, Fusi
         return tableId;
     }
 
+    @Override
+    public int getDataSourceIdentifier() {
+        return tableId;
+    }
+
     public int getColumnIndex() {
         return columnIndex;
     }

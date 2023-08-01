@@ -1,4 +1,4 @@
-package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.label;
+package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.label;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.winter.matching.rules.comparators.Comparator;

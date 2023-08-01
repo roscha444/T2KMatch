@@ -8,7 +8,7 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
  * implied. See the License for the specific language governing permissions and limitations under the License.
  */
-package de.uni_mannheim.informatik.dws.t2k.match.components;
+package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher;
 
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;

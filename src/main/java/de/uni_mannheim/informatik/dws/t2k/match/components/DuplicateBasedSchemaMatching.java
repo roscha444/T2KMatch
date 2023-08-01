@@ -17,9 +17,6 @@
  */
 package de.uni_mannheim.informatik.dws.t2k.match.components;
 
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_mannheim.informatik.dws.t2k.match.blocking.ClassAndTypeBasedSchemaBlocker;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparatorBasedOnSurfaceForms;
@@ -42,6 +39,8 @@ import de.uni_mannheim.informatik.dws.winter.similarity.date.WeightedDateSimilar
 import de.uni_mannheim.informatik.dws.winter.similarity.numeric.DeviationSimilarity;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.GeneralisedStringJaccard;
 import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimilarity;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Component that runs the duplicate-based schema matching
@@ -51,90 +50,93 @@ import de.uni_mannheim.informatik.dws.winter.similarity.string.LevenshteinSimila
  */
 public class DuplicateBasedSchemaMatching {
 
-	private MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine;
-	private WebTables web;
-	private KnowledgeBase kb;
-	private SurfaceForms surfaceForms;
-	private Map<Integer, Set<String>> classesPerTable;
-	private boolean matchKeys;
-	
-	private Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences;
-	/**
-	 * @param instanceCorrespondences the instanceCorrespondences to set
-	 */
-	public void setInstanceCorrespondences(
-			Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
-		this.instanceCorrespondences = instanceCorrespondences;
-	}
-	
-	private double valueSimilarityThreshold = 0.4;
-	
-	private double finalPropertySimilarityThreshold = 0.00;
-	/**
-	 * @param finalPropertySimilarityThreshold the finalPropertySimilarityThreshold to set
-	 */
-	public void setFinalPropertySimilarityThreshold(double finalPropertySimilarityThreshold) {
-		this.finalPropertySimilarityThreshold = finalPropertySimilarityThreshold;
-	}
-	
-	private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5);
-	
-	private SimilarityMeasure<Double> numericSimilarity = new DeviationSimilarity();
-	
-	private WeightedDateSimilarity dateSimilarity = new WeightedDateSimilarity(1, 3, 5);
-	
-	private int numVotesPerValue = 0; 
-	
-	private int numCorrespondencesPerColumn = 3;
-	
-	private int numInstanceCandidates = 2;
-	
-	private double instanceCandidateThreshold = 0.5;
-	
-	public DuplicateBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, SurfaceForms surfaceForms, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences, boolean matchKeys) {
-		this.matchingEngine = matchingEngine;
-		this.web = web;
-		this.kb = kb;
-		this.surfaceForms = surfaceForms;
-		this.classesPerTable = classesPerTable;
-		this.instanceCorrespondences = instanceCorrespondences;
-		this.matchKeys = matchKeys;
-	}
-	
-	public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>>  run() {
-		// select the top k candidates for each row and apply min similarity
-		Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> bestCandidates = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, numInstanceCandidates, instanceCandidateThreshold);
-		
-    	// create the blocker
-    	ClassAndTypeBasedSchemaBlocker classAndTypeBasedSchemaBlocker = new ClassAndTypeBasedSchemaBlocker(kb, classesPerTable);
-    	
-    	// run matching
-    	SchemaVotingRule votingRule = new SchemaVotingRule(valueSimilarityThreshold);
-    	votingRule.setComparatorForType(DataType.string, new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold, surfaceForms));
-    	votingRule.setComparatorForType(DataType.numeric, new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold));
-    	votingRule.setComparatorForType(DataType.date, new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold));
-    	if(!matchKeys) {
-    		votingRule.setRdfsLabelId(kb.getRdfsLabel().getColumnIndex());
-    	}
-    	
-    	// every value of the left-hand side has 2 votes for property correspondences (i.e. every lhs attribute creates up to two schema correspondences)
-    	TopKVotesAggregator<MatchableTableColumn, MatchableTableRow> voteFilter = new TopKVotesAggregator<>(numVotesPerValue);
-    	CorrespondenceAggregator<MatchableTableColumn, MatchableTableRow> voteAggregator = new T2KVoting(finalPropertySimilarityThreshold);
+    private MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine;
+    private WebTables web;
+    private KnowledgeBase kb;
+    private SurfaceForms surfaceForms;
+    private Map<Integer, Set<String>> classesPerTable;
+    private boolean matchKeys;
 
-    	Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences = 
-    			matchingEngine.runDuplicateBasedSchemaMatching(
-    					web.getSchema(), 
-    					kb.getSchema(), 
-    					bestCandidates, 
-    					votingRule, 
-    					voteFilter, 
-    					voteAggregator, 
-    					classAndTypeBasedSchemaBlocker);
-    	
-    	// after aggregation, the best 3 schema correspondences for each attribute on the lhs are created
-    	schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, numCorrespondencesPerColumn, 0.0);
+    private Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences;
 
-    	return schemaCorrespondences;
-	}
-	
+    /**
+     * @param instanceCorrespondences the instanceCorrespondences to set
+     */
+    public void setInstanceCorrespondences(
+        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences) {
+        this.instanceCorrespondences = instanceCorrespondences;
+    }
+
+    private double valueSimilarityThreshold = 0.4;
+
+    private double finalPropertySimilarityThreshold = 0.00;
+
+    /**
+     * @param finalPropertySimilarityThreshold the finalPropertySimilarityThreshold to set
+     */
+    public void setFinalPropertySimilarityThreshold(double finalPropertySimilarityThreshold) {
+        this.finalPropertySimilarityThreshold = finalPropertySimilarityThreshold;
+    }
+
+    private SimilarityMeasure<String> stringSimilarity = new GeneralisedStringJaccard(new LevenshteinSimilarity(), 0.5, 0.5);
+
+    private SimilarityMeasure<Double> numericSimilarity = new DeviationSimilarity();
+
+    private WeightedDateSimilarity dateSimilarity = new WeightedDateSimilarity(1, 3, 5);
+
+    private int numVotesPerValue = 0;
+
+    private int numCorrespondencesPerColumn = 3;
+
+    private int numInstanceCandidates = 2;
+
+    private double instanceCandidateThreshold = 0.5;
+
+    public DuplicateBasedSchemaMatching(MatchingEngine<MatchableTableRow, MatchableTableColumn> matchingEngine, WebTables web, KnowledgeBase kb, SurfaceForms surfaceForms, Map<Integer, Set<String>> classesPerTable, Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> instanceCorrespondences, boolean matchKeys) {
+        this.matchingEngine = matchingEngine;
+        this.web = web;
+        this.kb = kb;
+        this.surfaceForms = surfaceForms;
+        this.classesPerTable = classesPerTable;
+        this.instanceCorrespondences = instanceCorrespondences;
+        this.matchKeys = matchKeys;
+    }
+
+    public Processable<Correspondence<MatchableTableColumn, MatchableTableRow>>  run() {
+        // select the top k candidates for each row and apply min similarity
+        Processable<Correspondence<MatchableTableRow, MatchableTableColumn>> bestCandidates = matchingEngine.getTopKInstanceCorrespondences(instanceCorrespondences, numInstanceCandidates, instanceCandidateThreshold);
+
+        // create the blocker
+        ClassAndTypeBasedSchemaBlocker classAndTypeBasedSchemaBlocker = new ClassAndTypeBasedSchemaBlocker(kb, classesPerTable);
+
+        // run matching
+        SchemaVotingRule votingRule = new SchemaVotingRule(valueSimilarityThreshold);
+        votingRule.setComparatorForType(DataType.string, new MatchableTableRowComparatorBasedOnSurfaceForms(stringSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold, surfaceForms));
+        votingRule.setComparatorForType(DataType.numeric, new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold));
+        votingRule.setComparatorForType(DataType.date, new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), valueSimilarityThreshold));
+        if(!matchKeys) {
+            votingRule.setRdfsLabelId(kb.getRdfsLabel().getColumnIndex());
+        }
+
+        // every value of the left-hand side has 2 votes for property correspondences (i.e. every lhs attribute creates up to two schema correspondences)
+        TopKVotesAggregator<MatchableTableColumn, MatchableTableRow> voteFilter = new TopKVotesAggregator<>(numVotesPerValue);
+        CorrespondenceAggregator<MatchableTableColumn, MatchableTableRow> voteAggregator = new T2KVoting(finalPropertySimilarityThreshold);
+
+        Processable<Correspondence<MatchableTableColumn, MatchableTableRow>> schemaCorrespondences =
+            matchingEngine.runDuplicateBasedSchemaMatching(
+                web.getSchema(),
+                kb.getSchema(),
+                bestCandidates,
+                votingRule,
+                voteFilter,
+                voteAggregator,
+                classAndTypeBasedSchemaBlocker);
+
+        // after aggregation, the best 3 schema correspondences for each attribute on the lhs are created
+
+        //  schemaCorrespondences = matchingEngine.getTopKSchemaCorrespondences(schemaCorrespondences, numCorrespondencesPerColumn, 0.0);
+
+        return schemaCorrespondences;
+    }
+
 }

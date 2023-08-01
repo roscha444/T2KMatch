@@ -1,7 +1,7 @@
 package de.uni_mannheim.informatik.dws.t2k.match.components;
 
-import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.label.SFLabelBasedMatchingKB2WB;
-import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.label.SFLabelBasedMatchingWB2KB;
+import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.label.SFLabelBasedMatchingKB2WB;
+import de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.label.SFLabelBasedMatchingWB2KB;
 import de.uni_mannheim.informatik.dws.t2k.match.data.KnowledgeBase;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableColumn;
 import de.uni_mannheim.informatik.dws.t2k.match.data.MatchableTableRow;

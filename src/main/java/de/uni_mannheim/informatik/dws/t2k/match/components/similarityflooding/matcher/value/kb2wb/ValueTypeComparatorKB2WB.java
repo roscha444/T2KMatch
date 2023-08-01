@@ -1,4 +1,4 @@
-package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.value.wb2kb;
+package de.uni_mannheim.informatik.dws.t2k.match.components.similarityflooding.matcher.value.kb2wb;
 
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparator;
 import de.uni_mannheim.informatik.dws.t2k.match.comparators.MatchableTableRowComparatorBasedOnSurfaceForms;
@@ -24,8 +24,8 @@ import java.util.Map;
  * Comparator for value based SF, who only compares the same values against each other
  *
  * @author Robin Schumacher (info@robin-schumacher.com)
- */
-public class ValueTypeComparatorWB2KB implements Comparator<MatchableTableColumn, MatchableTableColumn> {
+ **/
+public class ValueTypeComparatorKB2WB implements Comparator<MatchableTableColumn, MatchableTableColumn> {
 
     private static final long serialVersionUID = 1L;
     private ComparatorLogger comparisonLog;
@@ -41,7 +41,7 @@ public class ValueTypeComparatorWB2KB implements Comparator<MatchableTableColumn
     private final SimilarityMeasure<Double> numericSimilarity = new DeviationSimilarity();
     private final WeightedDateSimilarity dateSimilarity = new WeightedDateSimilarity(1, 3, 5);
 
-    public ValueTypeComparatorWB2KB(Map<MatchableTableColumn, MatchableTableColumn> originalMatchableToAdaptedMatchable,
+    public ValueTypeComparatorKB2WB(Map<MatchableTableColumn, MatchableTableColumn> originalMatchableToAdaptedMatchable,
         Map<Integer, Map<Integer, List<Correspondence<MatchableTableRow, MatchableTableColumn>>>> tableToCorrespondenceMap, SurfaceForms surfaceForms, KnowledgeBase kb) {
         this.originalMatchableToAdaptedMatchable = originalMatchableToAdaptedMatchable;
         this.tableToCorrespondenceMap = tableToCorrespondenceMap;
@@ -55,34 +55,35 @@ public class ValueTypeComparatorWB2KB implements Comparator<MatchableTableColumn
         MatchableTableRowComparator doubleComparator = new MatchableTableRowComparator<>(numericSimilarity, kb.getPropertyIndices(), 0.2);
         MatchableTableRowDateComparator dateComparator = new MatchableTableRowDateComparator(dateSimilarity, kb.getPropertyIndices(), 0.2);
 
-        MatchableTableColumn secondRecord = originalMatchableToAdaptedMatchable.get(record2);
+        MatchableTableColumn first = originalMatchableToAdaptedMatchable.get(record1);
 
         double result = 0.0;
         int countResult = 0;
 
-        if (tableToCorrespondenceMap.containsKey(record1.getTableId()) && tableToCorrespondenceMap.get(record1.getTableId()).containsKey(secondRecord.getTableId())) {
+        if (tableToCorrespondenceMap.containsKey(record2.getTableId()) && tableToCorrespondenceMap.get(record2.getTableId()).containsKey(first.getTableId())) {
             surfaceForms.loadIfRequired();
-            for (Correspondence<MatchableTableRow, MatchableTableColumn> corr : tableToCorrespondenceMap.get(record1.getTableId()).get(secondRecord.getTableId())) {
-
-                int indexFirstRecord = record1.getColumnIndex();
-                DataType typeFirstRecord = corr.getFirstRecord().getType(indexFirstRecord);
+            for (Correspondence<MatchableTableRow, MatchableTableColumn> corr : tableToCorrespondenceMap.get(record2.getTableId()).get(first.getTableId())) {
+                MatchableTableRow getSecondRecord = corr.getFirstRecord();
+                MatchableTableRow getFirstRecord = corr.getSecondRecord();
 
                 int indexSecondRecord = record2.getColumnIndex();
-                DataType typeSecondRecord = corr.getSecondRecord().getType(secondRecord.getColumnIndex());
+                DataType typeSecondRecord = getSecondRecord.getType(indexSecondRecord);
 
-                if (typeFirstRecord != null && typeSecondRecord != null) {
+                int indexFirstRecord = record1.getColumnIndex();
+                DataType typeFirstRecord = getFirstRecord.getType(first.getColumnIndex());
 
-                    if (typeFirstRecord.equals(typeSecondRecord)) {
+                if (typeSecondRecord != null && typeFirstRecord != null) {
+
+                    if (typeSecondRecord.equals(typeFirstRecord)) {
                         countResult++;
-                        if (typeFirstRecord.equals(DataType.string)) {
-                            result += stringSurfaceComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), indexFirstRecord, indexSecondRecord);
-                        } else if (typeFirstRecord.equals(DataType.numeric)) {
-                            result += doubleComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
-                        } else if (typeFirstRecord.equals(DataType.date)) {
-                            result += dateComparator.compare(corr.getFirstRecord(), corr.getSecondRecord(), record1, record2);
+                        if (typeSecondRecord.equals(DataType.string)) {
+                            result += stringSurfaceComparator.compare(getSecondRecord, getFirstRecord, indexSecondRecord, indexFirstRecord);
+                        } else if (typeSecondRecord.equals(DataType.numeric)) {
+                            result += doubleComparator.compare(getSecondRecord, getFirstRecord, record2, record1);
+                        } else if (typeSecondRecord.equals(DataType.date)) {
+                            result += dateComparator.compare(getSecondRecord, getFirstRecord, record2, record1);
                         }
                     }
-
                 }
             }
         }
